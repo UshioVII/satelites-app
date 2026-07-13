@@ -10,19 +10,25 @@ Agregar cuentas de usuario a Satélites App. El corazón del proyecto es un **CR
 usuario recibe un token; mientras sea válido, la sesión se mantiene sin volver a loguear.
 
 Además se enriquece el visualizador: info tipo enciclopedia por satélite (Wikipedia +
-imagen), notas personales del usuario, y un mapa de calor de densidad de satélites con
-modo de visualización configurable y persistido por usuario.
+imagen), notas personales del usuario, un mapa de calor de densidad de satélites con
+modo de visualización configurable y persistido por usuario, un mini-dashboard de
+estadísticas con chart.js, y una pasada de pulido sobre el globo (bugs y animaciones).
 
 ## Alcance
 
 Incluye:
 - Backend Node + Express con SQLite y JWT (nuevo, la app hoy es solo frontend).
 - Registro, login y sesión por token.
-- CRUD de favoritos (un favorito = un satélite).
+- CRUD de favoritos (un favorito = un satélite), con opción de archivar.
 - CRUD de notas personales por satélite (una nota por usuario + satélite).
-- Perfil editable (nombre visible + ubicación de casa + modo de visualización).
+- Perfil editable (nombre + ubicación de casa + modo de visualización + avatar).
+- Avatar: elegir entre planetas prearmados o subir imagen/gif propia.
 - Panel de info por satélite: resumen + imagen desde Wikipedia (read-only), con fallback.
 - Mapa de calor de densidad de satélites, con toggle puntos / heatmap / hexbin.
+- Mini-dashboard de estadísticas con chart.js (satélites encima ahora + próximos pases).
+- Pantallas de carga (home y carga de satélites).
+- Pulido del visualizador: fix de duplicados, sin parpadeo, animaciones, movimiento
+  continuo con satélite seleccionado, globo de mayor resolución.
 - Home informativa, rutas nuevas en el frontend y protección de ruta.
 
 Fuera de alcance (se agregan solo si deja de ser learning/portfolio):
@@ -36,8 +42,10 @@ Fuera de alcance (se agregan solo si deja de ser learning/portfolio):
 - **Runtime:** Node (el que ya tiene cualquiera que clone el repo). Sin Bun para no forzar
   instalación de otro runtime.
 - **Backend:** `express`, `better-sqlite3` (binarios prebuilt, no compila nativo),
-  `jsonwebtoken`, `bcryptjs` (hash en JS puro, portable), `cors` (dev cross-port).
-- **Frontend:** Angular 22 ya existente (standalone, signals).
+  `jsonwebtoken`, `bcryptjs` (hash en JS puro, portable), `cors` (dev cross-port),
+  `multer` (subida del avatar).
+- **Frontend:** Angular 22 ya existente (standalone, signals) + `chart.js` (gráficos,
+  usado directo sin wrapper).
 
 Razón de cada elección: portabilidad. `npm install && npm run server` debe funcionar sin
 toolchain nativo ni runtimes extra.
@@ -52,20 +60,25 @@ agrega `/api → http://localhost:3000`.
 satelites-app/
   src/                  Angular (existente)
   server/
-    db.ts               conexión SQLite + creación de schema
-    auth.ts             hashPassword/verify, signToken/verifyToken, middleware requireAuth
-    routes.auth.ts      /api/register, /api/login, /api/me (GET/PATCH)
-    routes.favorites.ts /api/favorites (GET/POST/DELETE)
-    routes.notes.ts     /api/notes/:norad_id (GET/PUT/DELETE)
-    index.ts            arma express, monta rutas, escucha :3000
+    db.js               conexión SQLite + creación de schema
+    auth.js             hashPassword/verify, signToken/verifyToken, middleware requireAuth
+    routes.auth.js      /api/register, /api/login, /api/me (GET/PATCH)
+    routes.favorites.js /api/favorites (GET/POST/PATCH/DELETE)
+    routes.notes.js     /api/notes/:norad_id (GET/PUT/DELETE)
+    routes.avatar.js    /api/avatar (POST multipart, sube imagen/gif)
+    index.js            arma express, monta rutas, sirve /media, escucha :3000
     test.js             self-check del flujo completo (asserts, sin framework)
     data.db             base SQLite (gitignored)
+    media/              avatares subidos (gitignored)
   proxy.conf.json       + /api
   package.json          + deps y script "server"
 ```
 
-Cada módulo tiene una responsabilidad y una interfaz clara: `db` expone la conexión,
-`auth` expone hashing/token/guard, los `routes.*` solo arman handlers Express.
+El backend es **JavaScript plano (ESM)**, sin paso de compilación: corre en Node directo
+(`node server/index.js`) para que clonar y arrancar no requiera toolchain de TypeScript. El
+frontend sigue en TypeScript vía Angular. Cada módulo tiene una responsabilidad e interfaz
+clara: `db` expone la conexión, `auth` expone hashing/token/guard, los `routes.*` solo arman
+handlers Express.
 
 ## Modelo de datos (SQLite)
 
@@ -77,7 +90,8 @@ CREATE TABLE users (
   display_name  TEXT NOT NULL,
   home_lat      REAL,
   home_lng      REAL,
-  viz_mode      TEXT NOT NULL DEFAULT 'points',  -- 'points' | 'heatmap' | 'hexbin'
+  viz_mode      TEXT NOT NULL DEFAULT 'points',   -- 'points' | 'heatmap' | 'hexbin'
+  avatar        TEXT NOT NULL DEFAULT 'preset:earth', -- 'preset:<id>' o '/media/<archivo>'
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -86,6 +100,7 @@ CREATE TABLE favorites (
   user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   norad_id   INTEGER NOT NULL,     -- clave estable del satélite
   sat_name   TEXT NOT NULL,        -- nombre para mostrar
+  archived   INTEGER NOT NULL DEFAULT 0,  -- 0 activo, 1 archivado
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(user_id, norad_id)        -- no duplicar el mismo satélite
 );
@@ -101,7 +116,8 @@ CREATE TABLE notes (
 
 `norad_id` sale de la línea 1 del TLE (o de `satrec.satnum` vía satellite.js). Se guarda
 como clave estable porque los nombres pueden cambiar. `viz_mode` guarda la preferencia de
-visualización del globo por usuario.
+visualización del globo por usuario. `avatar` guarda un preset (`preset:mars`, etc.) o la
+ruta de un archivo subido. `favorites.archived` permite archivar sin borrar.
 
 ## API
 
@@ -111,10 +127,12 @@ Todas bajo `/api`. Las que requieren sesión validan `Authorization: Bearer <jwt
 |--------|------|------|--------------------|
 | POST | `/register` | no | `{email, password, display_name}` → `{token, user}` |
 | POST | `/login` | no | `{email, password}` → `{token, user}` |
-| GET | `/me` | sí | → `{id, email, display_name, home_lat, home_lng, viz_mode}` |
-| PATCH | `/me` | sí | `{display_name?, home_lat?, home_lng?, viz_mode?}` → user actualizado |
-| GET | `/favorites` | sí | → `[{id, norad_id, sat_name, created_at}]` |
+| GET | `/me` | sí | → `{id, email, display_name, home_lat, home_lng, viz_mode, avatar}` |
+| PATCH | `/me` | sí | `{display_name?, home_lat?, home_lng?, viz_mode?, avatar?}` → user (avatar solo acepta `preset:<id>` acá) |
+| POST | `/avatar` | sí | multipart imagen/gif → guarda en `/media`, setea `users.avatar`, → `{avatar}` |
+| GET | `/favorites` | sí | → `[{id, norad_id, sat_name, archived, created_at}]` (activos y archivados) |
 | POST | `/favorites` | sí | `{norad_id, sat_name}` → favorito creado (409 si ya existe) |
+| PATCH | `/favorites/:id` | sí | `{archived}` → archiva/desarchiva (solo si es del usuario) |
 | DELETE | `/favorites/:id` | sí | → 204 (solo si el favorito es del usuario) |
 | GET | `/notes/:norad_id` | sí | → `{norad_id, body, updated_at}` o 404 si no hay |
 | PUT | `/notes/:norad_id` | sí | `{body}` → upsert de la nota (crea o reemplaza) |
@@ -124,6 +142,9 @@ Reglas:
 - Password nunca vuelve en ninguna respuesta.
 - JWT HS256, firmado con secreto de env (`JWT_SECRET`, con fallback de dev). Expira en 7 días.
 - Validación en el borde: email con formato, password mínimo 8 chars, `display_name` no vacío.
+- Upload de avatar: solo `image/*` (incluye gif), tamaño máximo 2 MB, nombre de archivo
+  generado por el server (no se confía en el nombre del cliente); el `preset:<id>` se valida
+  contra la lista fija de planetas.
 - Errores con status correcto: 400 (validación), 401 (sin/token inválido), 404, 409 (conflicto).
 
 ## Frontend
@@ -135,17 +156,36 @@ Rutas:
 - `/` — **Home**: qué es el proyecto, qué hace, stack, y CTA a login / ver globo.
 - `/login`, `/register` — formularios.
 - `/globe` — el visualizador actual.
-- `/profile` — protegido por guard: editar nombre y ubicación de casa; listar y quitar favoritos.
+- `/profile` — protegido por guard: editar nombre, ubicación de casa y avatar; listar
+  favoritos (activos y archivados, con archivar/desarchivar/quitar).
+- `/stats` — protegido: mini-dashboard con chart.js (satélites encima ahora + próximos pases).
 
 Piezas nuevas:
 - `auth.service.ts` — register/login/logout, guarda el JWT en `localStorage`, expone
-  `isLoggedIn` (signal) y el usuario actual (incluye `viz_mode`).
+  `isLoggedIn` (signal) y el usuario actual (incluye `viz_mode` y `avatar`).
 - `auth.interceptor.ts` — agrega `Authorization: Bearer` a los requests a `/api`.
-- `auth.guard.ts` — redirige a `/login` si no hay sesión al entrar a `/profile`.
-- `favorites.service.ts` — CRUD de favoritos contra `/api/favorites`.
+- `auth.guard.ts` — redirige a `/login` si no hay sesión al entrar a rutas protegidas
+  (`/profile`, `/stats`).
+- `favorites.service.ts` — CRUD de favoritos + archivar (PATCH) contra `/api/favorites`.
 - `notes.service.ts` — GET/PUT/DELETE de la nota personal por `norad_id`.
 - `wiki.service.ts` — consulta la API REST de Wikipedia por nombre de satélite; devuelve
   `{extract, thumbnail}` o `null` si no hay página. Cachea en memoria por sesión.
+
+### Avatar (en `/profile`)
+
+Grid de planetas prearmados (imágenes bundleadas en `public/avatars/`, ej. tierra, marte,
+júpiter) para elegir con un click (setea `avatar: 'preset:<id>'` vía `PATCH /me`), más un
+botón para subir imagen/gif propia (`POST /api/avatar`, multipart). El avatar elegido se
+muestra en la navbar y en el perfil.
+
+### Estadísticas (`/stats`)
+
+Mini-dashboard con chart.js (usado directo, sin `ng2-charts`):
+- **Satélites encima ahora**: distribución de los satélites sobre tu ubicación por rango de
+  elevación/distancia (barras). Sale de `overhead` que ya se calcula.
+- **Próximos pases**: los próximos pases del satélite seleccionado (o de un favorito),
+  cuándo ocurren y su elevación máxima. Usa la predicción de pases existente.
+Requiere ubicación de casa o geolocalización; si no hay, invita a definirla.
 
 ### Panel de info del satélite (en `/globe`)
 
@@ -177,6 +217,28 @@ Integración con lo existente:
   de geolocalización sigue disponible para sobreescribir.
 - Al entrar a `/globe` con sesión, el globo arranca en el `viz_mode` guardado del usuario.
 
+### Pulido del visualizador
+
+Fixes y mejoras sobre el globo ya hecho (fases 2-5), incluidos en esta fase:
+- **Bug: satélites duplicados** — deduplicar la lista de TLEs por `norad_id` (la fuente a
+  veces trae repetidos); root cause en la carga, no en el render.
+- **No rotar durante "¿Qué tengo sobre mí?"** — pausar `autoRotate` mientras el panel de
+  overhead está activo, para poder leerlo quieto.
+- **Movimiento continuo con selección** — hoy al seleccionar un satélite se congela todo
+  (`tick()` corta). Cambiar a que el seleccionado y el resto sigan moviéndose, con la órbita
+  y la telemetría actualizándose en vivo.
+- **Sin parpadeo de puntos** — el flicker viene de reemplazar `pointsData` entero cada
+  segundo; actualizar de forma que three.js no re-cree los puntos (revisar al implementar).
+- **Recorrido fluido** — interpolar/suavizar el trazo de la órbita.
+- **Animaciones** — transición al abrir/cerrar el panel y al aparecer overhead.
+- **Globo de mayor resolución** — textura de la Tierra en más calidad ("que sirva de GPS").
+
+### Pantallas de carga
+
+- **Home**: splash/estado de carga inicial mientras arranca la app.
+- **Satélites**: ya existe `loadState` (loading/ok/error); se le da una pantalla/spinner
+  más presentable en `/globe` mientras cargan los TLEs.
+
 ## Manejo de errores
 
 - Backend: cada handler responde el status correcto (ver tabla). Errores no esperados → 500
@@ -187,9 +249,10 @@ Integración con lo existente:
 ## Testing
 
 - **Backend** — `server/test.js`, asserts nativos (sin framework): register → login → GET /me
-  → PATCH /me (viz_mode) → POST favorito → GET favoritos → DELETE → PUT nota → GET nota →
-  DELETE nota → verificar listas vacías. Cubre también rechazo sin token (401) y password mal
-  (401). Usa una DB temporal.
+  → PATCH /me (viz_mode + avatar preset) → POST favorito → PATCH archivar/desarchivar → GET
+  favoritos → DELETE → PUT nota → GET nota → DELETE nota → verificar listas vacías. Cubre
+  también rechazo sin token (401), password mal (401), y rechazo de avatar con tipo/tamaño
+  inválido (400). Usa una DB temporal.
 - **Frontend** — specs de `auth.service` (guarda/limpia token) y `auth.guard` (bloquea sin
   sesión). Los 4 tests actuales del globo siguen verdes.
 
@@ -204,4 +267,4 @@ npm run server      # backend Express en :3000
 npm start           # Angular en :4200 (proxy /api -> :3000, /celestrak -> CelesTrak)
 ```
 
-`data.db` y `.env` van al `.gitignore`.
+`data.db`, `.env` y `server/media/` van al `.gitignore`.
