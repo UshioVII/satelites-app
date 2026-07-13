@@ -74,8 +74,10 @@ satelites-app/
   package.json          + deps y script "server"
 ```
 
-El backend es **JavaScript plano (ESM)**, sin paso de compilación: corre en Node directo
-(`node server/index.js`) para que clonar y arrancar no requiera toolchain de TypeScript. El
+El backend es **JavaScript plano (CommonJS)**, sin paso de compilación: corre en Node directo
+(`node server/index.js`) para que clonar y arrancar no requiera toolchain de TypeScript.
+CommonJS porque el `package.json` raíz no declara `type` y evita fricción de interop con
+`better-sqlite3` (nativo/CJS). El
 frontend sigue en TypeScript vía Angular. Cada módulo tiene una responsabilidad e interfaz
 clara: `db` expone la conexión, `auth` expone hashing/token/guard, los `routes.*` solo arman
 handlers Express.
