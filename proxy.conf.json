@@ -1,0 +1,8 @@
+{
+  "/celestrak": {
+    "target": "https://celestrak.org",
+    "secure": true,
+    "changeOrigin": true,
+    "pathRewrite": { "^/celestrak": "" }
+  }
+}

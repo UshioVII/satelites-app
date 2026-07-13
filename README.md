@@ -1,59 +1,58 @@
-# SatelitesApp
+# Satélites App
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.6.
+Visualizador 3D de satélites en tiempo real. Renderiza un globo terráqueo interactivo y
+propaga las órbitas de satélites desde datos TLE reales, calculando posiciones al segundo.
 
-## Development server
+![Angular](https://img.shields.io/badge/Angular-22-dd0031) ![License](https://img.shields.io/badge/license-MIT-blue)
 
-To start a local development server, run:
+## Qué hace
 
-```bash
-ng serve
-```
+- **Globo 3D en vivo**: satélites del grupo `visual` de CelesTrak posicionados en tiempo real
+  sobre la Tierra nocturna, con auto-rotación.
+- **Selección interactiva**: click en un satélite para congelar la escena, dibujar su órbita
+  completa y ver su telemetría (posición, altitud, velocidad).
+- **"¿Qué tengo encima?"**: con tu geolocalización, calcula qué satélites están sobre tu
+  horizonte ahora mismo (elevación/azimut/compás).
+- **Predicción de pases**: para el satélite seleccionado, los próximos pases visibles sobre
+  tu ubicación.
+- **Resiliencia**: si CelesTrak no responde, cae automáticamente a un snapshot TLE bundleado
+  (`public/visual.tle`, 158 satélites) y avisa en la UI con opción de reintentar en vivo.
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## Stack
 
-## Code scaffolding
+- Angular 22 (standalone, signals, zoneless)
+- [globe.gl](https://github.com/vasturiano/globe.gl) + three.js — render del globo
+- [satellite.js](https://github.com/shashwatak/satellite-js) — propagación SGP4 de TLEs
+- Vitest — tests unitarios
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
-
-```bash
-ng generate component component-name
-```
-
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
-
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
+## Desarrollo
 
 ```bash
-ng build
+npm install
+npm start          # ng serve -> http://localhost:4200
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+El dev server proxea `/celestrak` hacia CelesTrak (ver `proxy.conf.json`) para evitar CORS.
 
 ```bash
-ng test
+npm run build      # build de producción a dist/
+npm test           # tests unitarios (Vitest)
 ```
 
-## Running end-to-end tests
+## Fuente de datos
 
-For end-to-end (e2e) testing, run:
+TLEs del grupo `visual` de [CelesTrak](https://celestrak.org). Si la fuente en vivo falla
+(timeout de 12s o error), el servicio usa el snapshot bundleado en `public/visual.tle`.
 
-```bash
-ng e2e
-```
+## Roadmap
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+- [x] **Fase 1** — Scaffold Angular 22
+- [x] **Fase 2** — MVP: globo 3D con satélites en tiempo real
+- [x] **Fase 3** — Selección interactiva, órbita y panel de telemetría
+- [x] **Fase 4** — Geolocalización, satélites sobre el observador y predicción de pases
+- [x] **Fase 5** — Resiliencia con fallback TLE
+- [ ] **Fase 6** — Autenticación JWT
 
-## Additional Resources
+## Licencia
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+MIT

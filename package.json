@@ -17,7 +17,10 @@
     "@angular/forms": "^22.0.0",
     "@angular/platform-browser": "^22.0.0",
     "@angular/router": "^22.0.0",
+    "globe.gl": "^2.46.1",
     "rxjs": "~7.8.0",
+    "satellite.js": "^6.0.2",
+    "three": "^0.185.1",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
