@@ -42,8 +42,14 @@ module.exports = function routesAuth(db) {
       if (!String(display_name).trim()) return res.status(400).json({ error: 'nombre requerido' });
       sets.push('display_name = ?'); args.push(String(display_name).trim());
     }
-    if (home_lat !== undefined) { sets.push('home_lat = ?'); args.push(home_lat === null ? null : Number(home_lat)); }
-    if (home_lng !== undefined) { sets.push('home_lng = ?'); args.push(home_lng === null ? null : Number(home_lng)); }
+    if (home_lat !== undefined) {
+      if (home_lat !== null && !Number.isFinite(Number(home_lat))) return res.status(400).json({ error: 'coordenada inválida' });
+      sets.push('home_lat = ?'); args.push(home_lat === null ? null : Number(home_lat));
+    }
+    if (home_lng !== undefined) {
+      if (home_lng !== null && !Number.isFinite(Number(home_lng))) return res.status(400).json({ error: 'coordenada inválida' });
+      sets.push('home_lng = ?'); args.push(home_lng === null ? null : Number(home_lng));
+    }
     if (viz_mode !== undefined) {
       if (!VIZ_MODES.includes(viz_mode)) return res.status(400).json({ error: 'viz_mode inválido' });
       sets.push('viz_mode = ?'); args.push(viz_mode);

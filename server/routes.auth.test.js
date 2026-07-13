@@ -71,3 +71,35 @@ test('PATCH /me actualiza viz_mode y preset de avatar', async () => {
   assert.equal(u.avatar, 'preset:mars');
   close();
 });
+
+test('PATCH /me con home_lat no numérico da 400', async () => {
+  const { base, close } = await boot();
+  const reg = await (await fetch(`${base}/api/register`, { method: 'POST', ...json({ email: 'a@b.com', password: '12345678', display_name: 'Ana' }) })).json();
+  const r = await fetch(`${base}/api/me`, { method: 'PATCH', headers: { 'content-type': 'application/json', authorization: `Bearer ${reg.token}` }, body: JSON.stringify({ home_lat: 'abc' }) });
+  assert.equal(r.status, 400);
+  close();
+});
+
+test('PATCH /me con viz_mode inválido da 400', async () => {
+  const { base, close } = await boot();
+  const reg = await (await fetch(`${base}/api/register`, { method: 'POST', ...json({ email: 'a@b.com', password: '12345678', display_name: 'Ana' }) })).json();
+  const r = await fetch(`${base}/api/me`, { method: 'PATCH', headers: { 'content-type': 'application/json', authorization: `Bearer ${reg.token}` }, body: JSON.stringify({ viz_mode: 'raro' }) });
+  assert.equal(r.status, 400);
+  close();
+});
+
+test('PATCH /me con avatar preset inexistente da 400', async () => {
+  const { base, close } = await boot();
+  const reg = await (await fetch(`${base}/api/register`, { method: 'POST', ...json({ email: 'a@b.com', password: '12345678', display_name: 'Ana' }) })).json();
+  const r = await fetch(`${base}/api/me`, { method: 'PATCH', headers: { 'content-type': 'application/json', authorization: `Bearer ${reg.token}` }, body: JSON.stringify({ avatar: 'preset:inexistente' }) });
+  assert.equal(r.status, 400);
+  close();
+});
+
+test('PATCH /me con home_lat null da 200 (permite limpiar valor)', async () => {
+  const { base, close } = await boot();
+  const reg = await (await fetch(`${base}/api/register`, { method: 'POST', ...json({ email: 'a@b.com', password: '12345678', display_name: 'Ana' }) })).json();
+  const r = await fetch(`${base}/api/me`, { method: 'PATCH', headers: { 'content-type': 'application/json', authorization: `Bearer ${reg.token}` }, body: JSON.stringify({ home_lat: null }) });
+  assert.equal(r.status, 200);
+  close();
+});
