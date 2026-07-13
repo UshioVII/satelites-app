@@ -6,8 +6,12 @@ Estado: aprobado, pendiente de implementación
 ## Objetivo
 
 Agregar cuentas de usuario a Satélites App. El corazón del proyecto es un **CRUD**
-(favoritos + perfil) protegido por **sesión sostenida con token JWT**: al loguearse el
+(favoritos + perfil + notas) protegido por **sesión sostenida con token JWT**: al loguearse el
 usuario recibe un token; mientras sea válido, la sesión se mantiene sin volver a loguear.
+
+Además se enriquece el visualizador: info tipo enciclopedia por satélite (Wikipedia +
+imagen), notas personales del usuario, y un mapa de calor de densidad de satélites con
+modo de visualización configurable y persistido por usuario.
 
 ## Alcance
 
@@ -15,11 +19,17 @@ Incluye:
 - Backend Node + Express con SQLite y JWT (nuevo, la app hoy es solo frontend).
 - Registro, login y sesión por token.
 - CRUD de favoritos (un favorito = un satélite).
-- Perfil editable (nombre visible + ubicación de casa).
+- CRUD de notas personales por satélite (una nota por usuario + satélite).
+- Perfil editable (nombre visible + ubicación de casa + modo de visualización).
+- Panel de info por satélite: resumen + imagen desde Wikipedia (read-only), con fallback.
+- Mapa de calor de densidad de satélites, con toggle puntos / heatmap / hexbin.
 - Home informativa, rutas nuevas en el frontend y protección de ruta.
 
 Fuera de alcance (se agregan solo si deja de ser learning/portfolio):
-- Refresh tokens, verificación de email, reset de password, roles/permers.
+- Refresh tokens, verificación de email, reset de password, roles/permisos.
+- Cachear/persistir en base los datos de Wikipedia (se consultan en vivo desde el frontend).
+- Fotos reales garantizadas por satélite: no existe fuente para todo el dataset; solo hay
+  imagen cuando el satélite tiene página en Wikipedia, si no va un ícono genérico.
 
 ## Stack
 
@@ -46,6 +56,7 @@ satelites-app/
     auth.ts             hashPassword/verify, signToken/verifyToken, middleware requireAuth
     routes.auth.ts      /api/register, /api/login, /api/me (GET/PATCH)
     routes.favorites.ts /api/favorites (GET/POST/DELETE)
+    routes.notes.ts     /api/notes/:norad_id (GET/PUT/DELETE)
     index.ts            arma express, monta rutas, escucha :3000
     test.js             self-check del flujo completo (asserts, sin framework)
     data.db             base SQLite (gitignored)
@@ -66,6 +77,7 @@ CREATE TABLE users (
   display_name  TEXT NOT NULL,
   home_lat      REAL,
   home_lng      REAL,
+  viz_mode      TEXT NOT NULL DEFAULT 'points',  -- 'points' | 'heatmap' | 'hexbin'
   created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -77,10 +89,19 @@ CREATE TABLE favorites (
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(user_id, norad_id)        -- no duplicar el mismo satélite
 );
+
+CREATE TABLE notes (
+  user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  norad_id   INTEGER NOT NULL,     -- satélite al que aplica la nota
+  body       TEXT NOT NULL,        -- texto de la nota (markdown plano)
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (user_id, norad_id)  -- una nota por usuario y satélite (upsert)
+);
 ```
 
 `norad_id` sale de la línea 1 del TLE (o de `satrec.satnum` vía satellite.js). Se guarda
-como clave estable porque los nombres pueden cambiar.
+como clave estable porque los nombres pueden cambiar. `viz_mode` guarda la preferencia de
+visualización del globo por usuario.
 
 ## API
 
@@ -90,11 +111,14 @@ Todas bajo `/api`. Las que requieren sesión validan `Authorization: Bearer <jwt
 |--------|------|------|--------------------|
 | POST | `/register` | no | `{email, password, display_name}` → `{token, user}` |
 | POST | `/login` | no | `{email, password}` → `{token, user}` |
-| GET | `/me` | sí | → `{id, email, display_name, home_lat, home_lng}` |
-| PATCH | `/me` | sí | `{display_name?, home_lat?, home_lng?}` → user actualizado |
+| GET | `/me` | sí | → `{id, email, display_name, home_lat, home_lng, viz_mode}` |
+| PATCH | `/me` | sí | `{display_name?, home_lat?, home_lng?, viz_mode?}` → user actualizado |
 | GET | `/favorites` | sí | → `[{id, norad_id, sat_name, created_at}]` |
 | POST | `/favorites` | sí | `{norad_id, sat_name}` → favorito creado (409 si ya existe) |
 | DELETE | `/favorites/:id` | sí | → 204 (solo si el favorito es del usuario) |
+| GET | `/notes/:norad_id` | sí | → `{norad_id, body, updated_at}` o 404 si no hay |
+| PUT | `/notes/:norad_id` | sí | `{body}` → upsert de la nota (crea o reemplaza) |
+| DELETE | `/notes/:norad_id` | sí | → 204 |
 
 Reglas:
 - Password nunca vuelve en ninguna respuesta.
@@ -115,10 +139,35 @@ Rutas:
 
 Piezas nuevas:
 - `auth.service.ts` — register/login/logout, guarda el JWT en `localStorage`, expone
-  `isLoggedIn` (signal) y el usuario actual.
+  `isLoggedIn` (signal) y el usuario actual (incluye `viz_mode`).
 - `auth.interceptor.ts` — agrega `Authorization: Bearer` a los requests a `/api`.
 - `auth.guard.ts` — redirige a `/login` si no hay sesión al entrar a `/profile`.
 - `favorites.service.ts` — CRUD de favoritos contra `/api/favorites`.
+- `notes.service.ts` — GET/PUT/DELETE de la nota personal por `norad_id`.
+- `wiki.service.ts` — consulta la API REST de Wikipedia por nombre de satélite; devuelve
+  `{extract, thumbnail}` o `null` si no hay página. Cachea en memoria por sesión.
+
+### Panel de info del satélite (en `/globe`)
+
+Al seleccionar un satélite, además de la telemetría actual, el panel muestra:
+- **Wikipedia** (siempre, con o sin sesión): resumen + imagen si `wiki.service` encontró
+  página; si no, un ícono genérico de satélite y una nota de "sin datos de Wikipedia".
+  El nombre del TLE se limpia (quita paréntesis, ej. `ISS (ZARYA)` → `ISS`) para la búsqueda.
+- **Notas personales** (solo con sesión): textarea con la nota del usuario para ese satélite;
+  guarda con PUT (upsert), permite borrar. Sin sesión, invita a loguearse.
+
+### Mapa de calor (en `/globe`)
+
+Toggle con tres modos sobre los mismos datos ya propagados:
+- `points` — el render actual (puntos por satélite).
+- `heatmap` — capa de densidad de globe.gl alimentada con las posiciones actuales; resalta
+  las regiones con más satélites encima.
+- `hexbin` — agregación hexagonal con altura/color por cantidad.
+
+La API exacta de la capa (heatmap vs hexbin de globe.gl) se verifica leyendo globe.gl al
+implementar; el diseño fija el comportamiento, no el nombre del método. El modo elegido se
+persiste vía `PATCH /me { viz_mode }` cuando hay sesión; sin sesión, es solo un toggle local
+que arranca en `points`.
 
 Integración con lo existente:
 - En `/globe`, al seleccionar un satélite, botón **★ Favorito** visible solo si hay sesión;
@@ -126,6 +175,7 @@ Integración con lo existente:
 - La **ubicación de casa** guardada en el perfil se usa como observador por defecto para
   "satélites encima" y predicción de pases (sin pedir geolocalización cada vez); el botón
   de geolocalización sigue disponible para sobreescribir.
+- Al entrar a `/globe` con sesión, el globo arranca en el `viz_mode` guardado del usuario.
 
 ## Manejo de errores
 
@@ -137,10 +187,14 @@ Integración con lo existente:
 ## Testing
 
 - **Backend** — `server/test.js`, asserts nativos (sin framework): register → login → GET /me
-  → POST favorito → GET favoritos → DELETE → verificar lista vacía. Cubre también rechazo sin
-  token (401) y password mal (401). Usa una DB temporal.
+  → PATCH /me (viz_mode) → POST favorito → GET favoritos → DELETE → PUT nota → GET nota →
+  DELETE nota → verificar listas vacías. Cubre también rechazo sin token (401) y password mal
+  (401). Usa una DB temporal.
 - **Frontend** — specs de `auth.service` (guarda/limpia token) y `auth.guard` (bloquea sin
   sesión). Los 4 tests actuales del globo siguen verdes.
+
+Nota de dependencia externa: `wiki.service` pega a Wikipedia en vivo; en tests se mockea la
+respuesta HTTP, no se llama a la red real.
 
 ## Desarrollo
 
