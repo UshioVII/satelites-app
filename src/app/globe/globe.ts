@@ -11,6 +11,7 @@ import { DecimalPipe, DatePipe } from '@angular/common';
 import GlobeGl from 'globe.gl';
 import { SatellitesService, Sat, PosSat, OverheadSat, Pass, compass } from '../satellites.service';
 import { SatInfo } from '../sat/sat-info';
+import { AuthService } from '../auth/auth.service';
 
 export type VizMode = 'points' | 'heatmap' | 'hexbin';
 
@@ -22,6 +23,7 @@ export type VizMode = 'points' | 'heatmap' | 'hexbin';
 })
 export class Globe implements OnDestroy {
   private sats = inject(SatellitesService);
+  private auth = inject(AuthService);
   private globeEl = viewChild.required<ElementRef<HTMLDivElement>>('globe');
 
   readonly count = signal(0);
@@ -43,6 +45,10 @@ export class Globe implements OnDestroy {
   private timer?: ReturnType<typeof setInterval>;
 
   constructor() {
+    const saved = this.auth.user()?.viz_mode as VizMode | undefined;
+    if (saved === 'points' || saved === 'heatmap' || saved === 'hexbin') {
+      this.vizMode.set(saved);
+    }
     this.loadSatellites();
     afterNextRender(() => this.initGlobe());
   }
@@ -128,13 +134,15 @@ export class Globe implements OnDestroy {
   changeViz(mode: VizMode) {
     this.vizMode.set(mode);
     this.applyViz();
-    // (persistencia: se agrega en Task 2)
+    if (this.auth.isLoggedIn()) {
+      this.auth.updateProfile({ viz_mode: mode }).subscribe();
+    }
   }
 
   private select(d: PosSat) {
     this.selected.set(d);
     this.globe.controls().autoRotate = false;
-    this.globe.pointsData(this.points);
+    this.applyViz();
     const sat = this.tles.find((s) => s.name === d.name);
     this.selectedNorad.set(sat ? Number(sat.satrec.satnum) : null);
     this.globe.pathsData(sat ? [this.sats.orbitPath(sat, new Date())] : []);
@@ -148,7 +156,7 @@ export class Globe implements OnDestroy {
     this.passes.set([]);
     this.globe.controls().autoRotate = true;
     this.globe.pathsData([]);
-    this.globe.pointsData(this.points);
+    this.applyViz();
   }
 
   // Recalcula los proximos pases del satelite seleccionado sobre tu ubicacion.
