@@ -1,6 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap, map } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Observable, tap, map, catchError, of } from 'rxjs';
 
 export type User = {
   id: number;
@@ -23,14 +23,6 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isLoggedIn = computed(() => !!this._user());
 
-  constructor() {
-    // Diferido a microtask: el auth interceptor hace inject(AuthService) en
-    // cada request, y disparar el GET /api/me de forma síncrona acá dentro
-    // reentra en la resolución de DI de este mismo servicio (NG0200,
-    // circular dependency) porque todavía no terminó de construirse.
-    if (this._token()) queueMicrotask(() => this.rehydrate());
-  }
-
   token(): string | null {
     return this._token();
   }
@@ -49,13 +41,20 @@ export class AuthService {
     this._user.set(null);
   }
 
-  // Al iniciar con token guardado, recupera el user autenticado; si el token
-  // ya no es válido (401), limpia la sesión.
-  private rehydrate(): void {
-    this.http.get<User>('/api/me').subscribe({
-      next: (u) => this._user.set(u),
-      error: () => this.logout(),
-    });
+  // Recupera el user autenticado a partir del token guardado. Llamada desde
+  // el appInitializer (ver app.config.ts) para bloquear la navegación
+  // inicial del router hasta que la sesión esté resuelta. Si el token ya no
+  // es válido (401), limpia la sesión; otros errores (5xx, red) no tocan un
+  // token que puede seguir siendo válido. Siempre completa, para no colgar
+  // el bootstrap.
+  rehydrate(): Observable<unknown> {
+    return this.http.get<User>('/api/me').pipe(
+      tap((u) => this._user.set(u)),
+      catchError((err: HttpErrorResponse) => {
+        if (err.status === 401) this.logout();
+        return of(null);
+      }),
+    );
   }
 
   // Guarda token+user de la respuesta {token, user} y devuelve el user.

@@ -50,26 +50,28 @@ describe('AuthService', () => {
   afterEach(() => http.verify());
 
   describe('rehidratación al iniciar', () => {
-    afterEach(() => {
-      TestBed.resetTestingModule();
-      localStorage.clear();
-    });
-
-    // rehydrate() se dispara con queueMicrotask desde el constructor (ver
-    // auth.service.ts) para evitar un NG0200 (dependencia circular: el auth
-    // interceptor hace inject(AuthService) en cada request, y llamarlo de
-    // forma síncrona en el constructor reentra en la propia resolución de
-    // DI del servicio). Por eso estos tests esperan un microtask antes de
-    // buscar el request.
-    it('rehidrata user si hay token al iniciar', async () => {
+    // rehydrate() ya no se auto-dispara desde el constructor: la llama
+    // explícitamente el appInitializer (ver app.config.ts) antes de la
+    // navegación inicial del router. Estos tests la invocan a mano, con un
+    // token pre-existente en localStorage (simula un refresh con sesión
+    // guardada) para que AuthService lo lea en su constructor.
+    function freshServiceWithToken(): { s: AuthService; h: HttpTestingController } {
       localStorage.setItem('sat_token', 'jwt123');
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
       });
-      const s = TestBed.inject(AuthService);
-      const h = TestBed.inject(HttpTestingController);
-      await Promise.resolve();
+      return { s: TestBed.inject(AuthService), h: TestBed.inject(HttpTestingController) };
+    }
+
+    afterEach(() => {
+      TestBed.resetTestingModule();
+      localStorage.clear();
+    });
+
+    it('rehidrata user si hay token al iniciar', () => {
+      const { s, h } = freshServiceWithToken();
+      s.rehydrate().subscribe();
 
       const req = h.expectOne('/api/me');
       expect(req.request.method).toBe('GET');
@@ -80,20 +82,27 @@ describe('AuthService', () => {
       h.verify();
     });
 
-    it('logout si /api/me falla al iniciar', async () => {
-      localStorage.setItem('sat_token', 'jwt123');
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
-      });
-      const s = TestBed.inject(AuthService);
-      const h = TestBed.inject(HttpTestingController);
-      await Promise.resolve();
+    it('logout si /api/me falla con 401 al iniciar', () => {
+      const { s, h } = freshServiceWithToken();
+      s.rehydrate().subscribe();
 
       const req = h.expectOne('/api/me');
       req.flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
 
       expect(s.token()).toBeNull();
+      expect(s.isLoggedIn()).toBe(false);
+      h.verify();
+    });
+
+    it('preserva el token si /api/me falla con un error transitorio (500)', () => {
+      const { s, h } = freshServiceWithToken();
+      s.rehydrate().subscribe();
+
+      const req = h.expectOne('/api/me');
+      req.flush('server error', { status: 500, statusText: 'Internal Server Error' });
+
+      expect(s.token()).toBe('jwt123');
+      expect(s.user()).toBeNull();
       expect(s.isLoggedIn()).toBe(false);
       h.verify();
     });
