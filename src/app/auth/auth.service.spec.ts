@@ -48,4 +48,54 @@ describe('AuthService', () => {
   });
 
   afterEach(() => http.verify());
+
+  describe('rehidratación al iniciar', () => {
+    afterEach(() => {
+      TestBed.resetTestingModule();
+      localStorage.clear();
+    });
+
+    // rehydrate() se dispara con queueMicrotask desde el constructor (ver
+    // auth.service.ts) para evitar un NG0200 (dependencia circular: el auth
+    // interceptor hace inject(AuthService) en cada request, y llamarlo de
+    // forma síncrona en el constructor reentra en la propia resolución de
+    // DI del servicio). Por eso estos tests esperan un microtask antes de
+    // buscar el request.
+    it('rehidrata user si hay token al iniciar', async () => {
+      localStorage.setItem('sat_token', 'jwt123');
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
+      });
+      const s = TestBed.inject(AuthService);
+      const h = TestBed.inject(HttpTestingController);
+      await Promise.resolve();
+
+      const req = h.expectOne('/api/me');
+      expect(req.request.method).toBe('GET');
+      req.flush(USER);
+
+      expect(s.user()).toEqual(USER);
+      expect(s.isLoggedIn()).toBe(true);
+      h.verify();
+    });
+
+    it('logout si /api/me falla al iniciar', async () => {
+      localStorage.setItem('sat_token', 'jwt123');
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [AuthService, provideHttpClient(), provideHttpClientTesting()],
+      });
+      const s = TestBed.inject(AuthService);
+      const h = TestBed.inject(HttpTestingController);
+      await Promise.resolve();
+
+      const req = h.expectOne('/api/me');
+      req.flush('unauthorized', { status: 401, statusText: 'Unauthorized' });
+
+      expect(s.token()).toBeNull();
+      expect(s.isLoggedIn()).toBe(false);
+      h.verify();
+    });
+  });
 });

@@ -23,6 +23,14 @@ export class AuthService {
   readonly user = this._user.asReadonly();
   readonly isLoggedIn = computed(() => !!this._user());
 
+  constructor() {
+    // Diferido a microtask: el auth interceptor hace inject(AuthService) en
+    // cada request, y disparar el GET /api/me de forma síncrona acá dentro
+    // reentra en la resolución de DI de este mismo servicio (NG0200,
+    // circular dependency) porque todavía no terminó de construirse.
+    if (this._token()) queueMicrotask(() => this.rehydrate());
+  }
+
   token(): string | null {
     return this._token();
   }
@@ -39,6 +47,15 @@ export class AuthService {
     localStorage.removeItem(TOKEN_KEY);
     this._token.set(null);
     this._user.set(null);
+  }
+
+  // Al iniciar con token guardado, recupera el user autenticado; si el token
+  // ya no es válido (401), limpia la sesión.
+  private rehydrate(): void {
+    this.http.get<User>('/api/me').subscribe({
+      next: (u) => this._user.set(u),
+      error: () => this.logout(),
+    });
   }
 
   // Guarda token+user de la respuesta {token, user} y devuelve el user.
