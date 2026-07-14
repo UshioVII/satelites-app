@@ -1,0 +1,15 @@
+.av {
+  display: inline-block;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #1e2636;
+}
+.planet { background: #333; }
+.planet-earth { background: radial-gradient(circle at 35% 30%, #4fa3ff, #1b3a6b 70%, #0a1a33); }
+.planet-mars { background: radial-gradient(circle at 35% 30%, #ff8a5b, #a83a1a 70%, #5c1e0e); }
+.planet-jupiter { background: radial-gradient(circle at 35% 30%, #e8c39e, #b07b4a 60%, #7a4a2a); }
+.planet-saturn { background: radial-gradient(circle at 35% 30%, #f0e2b0, #c9a24a 70%, #8a6a2a); }
+.planet-neptune { background: radial-gradient(circle at 35% 30%, #6fb1ff, #2a4fb0 70%, #16265c); }
+.planet-moon { background: radial-gradient(circle at 35% 30%, #e8e8e8, #9a9a9a 70%, #5a5a5a); }
