@@ -10,10 +10,11 @@ import {
 import { DecimalPipe, DatePipe } from '@angular/common';
 import GlobeGl from 'globe.gl';
 import { SatellitesService, Sat, PosSat, OverheadSat, Pass, compass } from '../satellites.service';
+import { SatInfo } from '../sat/sat-info';
 
 @Component({
   selector: 'app-globe',
-  imports: [DecimalPipe, DatePipe],
+  imports: [DecimalPipe, DatePipe, SatInfo],
   templateUrl: './globe.html',
   styleUrl: './globe.css',
 })
@@ -25,6 +26,7 @@ export class Globe implements OnDestroy {
   readonly loadState = signal<'loading' | 'ok' | 'error'>('loading'); // estado de carga de TLEs
   readonly live = signal(true); // false = usando snapshot de respaldo (CelesTrak caido)
   readonly selected = signal<PosSat | null>(null);
+  readonly selectedNorad = signal<number | null>(null);
   readonly observer = signal<{ lat: number; lng: number } | null>(null); // tu ubicacion
   readonly overhead = signal<OverheadSat[]>([]); // satelites sobre vos ahora
   readonly passes = signal<Pass[]>([]); // proximos pases del satelite seleccionado sobre vos
@@ -101,6 +103,7 @@ export class Globe implements OnDestroy {
     this.globe.controls().autoRotate = false;
     this.globe.pointsData(this.points);
     const sat = this.tles.find((s) => s.name === d.name);
+    this.selectedNorad.set(sat ? Number(sat.satrec.satnum) : null);
     this.globe.pathsData(sat ? [this.sats.orbitPath(sat, new Date())] : []);
     this.updatePasses(sat);
   }
@@ -108,6 +111,7 @@ export class Globe implements OnDestroy {
   deselect() {
     if (!this.selected()) return;
     this.selected.set(null);
+    this.selectedNorad.set(null);
     this.passes.set([]);
     this.globe.controls().autoRotate = true;
     this.globe.pathsData([]);
