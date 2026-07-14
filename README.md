@@ -39,6 +39,19 @@ npm run build      # build de producción a dist/
 npm test           # tests unitarios (Vitest)
 ```
 
+### Backend (API de cuentas)
+
+El backend Node/Express vive en `server/` (JavaScript, sin build). Corre aparte del frontend:
+
+```bash
+npm run server        # API en http://localhost:3000
+npm start             # Angular en :4200 (proxy /api -> :3000)
+node server/test.js   # self-check end-to-end del backend
+npm run server:test   # suite de tests del backend (node --test)
+```
+
+Variables de entorno (opcionales): `JWT_SECRET`, `PORT`, `DB_PATH`.
+
 ## Fuente de datos
 
 TLEs del grupo `visual` de [CelesTrak](https://celestrak.org). Si la fuente en vivo falla
