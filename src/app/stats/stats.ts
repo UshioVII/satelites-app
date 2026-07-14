@@ -61,6 +61,7 @@ export class Stats implements OnDestroy {
   private draw(ref: ElementRef<HTMLCanvasElement> | undefined, type: 'bar', labels: string[], data: number[], label: string) {
     const ctx = ref?.nativeElement?.getContext('2d');
     if (!ctx) return;
+    Chart.getChart(ctx)?.destroy();
     this.charts.push(new Chart(ctx, {
       type,
       data: { labels, datasets: [{ label, data, backgroundColor: 'rgba(0,229,255,0.6)' }] },
