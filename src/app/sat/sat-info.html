@@ -1,0 +1,28 @@
+<div class="sat-info">
+  @switch (wikiState()) {
+    @case ('loading') { <p class="muted">Buscando info…</p> }
+    @case ('ok') {
+      <div class="wiki">
+        @if (summary()!.thumbnail) { <img [src]="summary()!.thumbnail" alt="foto" class="thumb" /> }
+        <p class="extract">{{ summary()!.extract }}</p>
+        @if (summary()!.url) { <a [href]="summary()!.url" target="_blank" rel="noopener">Wikipedia ↗</a> }
+      </div>
+    }
+    @case ('none') {
+      <p class="muted">🛰️ Sin datos de Wikipedia para este objeto.</p>
+    }
+  }
+
+  @if (auth.isLoggedIn()) {
+    <button class="fav" (click)="addFavorite()">★ Favorito</button>
+    @if (favMsg()) { <span class="favmsg">{{ favMsg() }}</span> }
+
+    <div class="notes">
+      <label>Mis notas</label>
+      <textarea [ngModel]="note()" (ngModelChange)="note.set($event)" rows="3" placeholder="Anotá algo sobre este satélite…"></textarea>
+      <button (click)="saveNote()">Guardar nota</button>
+    </div>
+  } @else {
+    <p class="muted">Iniciá sesión para guardar favoritos y notas.</p>
+  }
+</div>

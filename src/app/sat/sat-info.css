@@ -1,0 +1,12 @@
+.sat-info { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.wiki { display: flex; flex-direction: column; gap: 0.4rem; }
+.thumb { width: 100%; max-height: 8rem; object-fit: cover; border-radius: 8px; }
+.extract { font-size: 0.85rem; line-height: 1.4; color: #c8d6e5; margin: 0; }
+.muted { color: #5b6b7f; font-size: 0.85rem; }
+.wiki a, .favmsg { color: #00e5ff; font-size: 0.8rem; }
+.fav { background: #16233a; color: #ffd166; border: 1px solid #2a3a52; border-radius: 6px; padding: 0.3rem 0.6rem; cursor: pointer; }
+.notes { display: flex; flex-direction: column; gap: 0.3rem; }
+.notes label { font-size: 0.8rem; color: #9fb3c8; }
+.notes textarea { background: #060911; border: 1px solid #1e2636; border-radius: 8px; color: #e6f1ff; padding: 0.4rem; resize: vertical; }
+.notes button, .fav { align-self: flex-start; }
+.notes button { background: #00e5ff; color: #051018; border: none; border-radius: 6px; padding: 0.3rem 0.7rem; cursor: pointer; }
