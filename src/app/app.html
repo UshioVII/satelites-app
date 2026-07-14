@@ -2,6 +2,7 @@
   <a class="brand" routerLink="/">🛰️ Satélites</a>
   <a routerLink="/globe" routerLinkActive="active">Globo</a>
   @if (auth.isLoggedIn()) {
+    <a routerLink="/profile" routerLinkActive="active">Perfil</a>
     <button class="link" (click)="auth.logout()">Salir</button>
   } @else {
     <a routerLink="/login" routerLinkActive="active">Entrar</a>

@@ -1,0 +1,59 @@
+<section class="profile">
+  <h1>Perfil</h1>
+
+  <div class="avatar-row">
+    <app-avatar [avatar]="auth.user()?.avatar ?? 'preset:earth'" />
+    <div class="picker">
+      <span>Elegí un planeta:</span>
+      <div class="planets">
+        @for (p of presets; track p) {
+          <button type="button" class="planet-btn" (click)="pickPreset(p)">
+            <app-avatar [avatar]="'preset:' + p" />
+          </button>
+        }
+      </div>
+      <label class="upload">
+        Subir imagen/gif
+        <input type="file" accept="image/*" (change)="onFile($event)" hidden />
+      </label>
+    </div>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="saveProfile()" class="edit">
+    <label>Nombre <input formControlName="display_name" /></label>
+    <label>Latitud de casa <input type="number" formControlName="home_lat" /></label>
+    <label>Longitud de casa <input type="number" formControlName="home_lng" /></label>
+    <button type="submit">Guardar</button>
+    @if (saved()) { <span class="ok">✓ guardado</span> }
+  </form>
+
+  <h2>Favoritos · {{ active().length }}</h2>
+  <ul class="favs">
+    @for (f of active(); track f.id) {
+      <li>
+        <span>{{ f.sat_name }}</span>
+        <span class="actions">
+          <button (click)="toggleArchive(f)">Archivar</button>
+          <button (click)="removeFav(f)">Quitar</button>
+        </span>
+      </li>
+    } @empty {
+      <li class="empty">Todavía no guardaste favoritos.</li>
+    }
+  </ul>
+
+  @if (archived().length) {
+    <h2>Archivados · {{ archived().length }}</h2>
+    <ul class="favs archived">
+      @for (f of archived(); track f.id) {
+        <li>
+          <span>{{ f.sat_name }}</span>
+          <span class="actions">
+            <button (click)="toggleArchive(f)">Desarchivar</button>
+            <button (click)="removeFav(f)">Quitar</button>
+          </span>
+        </li>
+      }
+    </ul>
+  }
+</section>
