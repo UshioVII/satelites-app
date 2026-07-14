@@ -6,5 +6,6 @@ export const routes: Routes = [
   { path: 'login', loadComponent: () => import('./pages/login').then((m) => m.Login) },
   { path: 'register', loadComponent: () => import('./pages/register').then((m) => m.Register) },
   { path: 'profile', canActivate: [authGuard], loadComponent: () => import('./profile/profile').then((m) => m.Profile) },
+  { path: 'stats', canActivate: [authGuard], loadComponent: () => import('./stats/stats').then((m) => m.Stats) },
   { path: '', pathMatch: 'full', loadComponent: () => import('./pages/home').then((m) => m.Home) },
 ];

@@ -1,0 +1,10 @@
+<section class="stats">
+  <h1>Estadísticas</h1>
+  @if (!observer()) {
+    <p class="muted">Definí tu ubicación para ver satélites cercanos y próximos pases.</p>
+    <button (click)="locateMe()">📍 Usar mi ubicación</button>
+    @if (geoError()) { <p class="err">{{ geoError() }}</p> }
+  }
+  <div class="chart"><canvas #overheadChart></canvas></div>
+  <div class="chart"><canvas #passesChart></canvas></div>
+</section>
