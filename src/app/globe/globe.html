@@ -1,0 +1,85 @@
+<div class="wrap">
+  <div #globe class="globe"></div>
+
+  <div class="hud">
+    @switch (loadState()) {
+      @case ('loading') {
+        <div>🛰️ Cargando satélites…</div>
+      }
+      @case ('ok') {
+        <div>🛰️ {{ count() }} satélites {{ live() ? 'en vivo' : 'en órbita' }}</div>
+        @if (!live()) {
+          <div class="warn">
+            Datos de respaldo (CelesTrak no disponible): posiciones aproximadas.
+            <button class="link" (click)="loadSatellites()">Reintentar en vivo</button>
+          </div>
+        }
+      }
+      @case ('error') {
+        <div class="err">⚠️ No se pudieron cargar los satélites.</div>
+        <button class="loc-btn" (click)="loadSatellites()">↻ Reintentar</button>
+      }
+    }
+    @if (loadState() === 'ok') {
+      <button class="loc-btn" (click)="locateMe()">📍 ¿Qué tengo sobre mí?</button>
+    }
+    @if (geoError()) {
+      <div class="err">{{ geoError() }}</div>
+    }
+  </div>
+
+  @if (observer()) {
+    <section class="overhead">
+      <h3>Sobre vos ahora · {{ overhead().length }}</h3>
+      <ul>
+        @for (s of overhead().slice(0, 6); track s.name) {
+          <li>
+            <span>{{ s.name }}</span>
+            <b>{{ s.elevation | number: '1.0-0' }}° elev</b>
+          </li>
+        } @empty {
+          <li class="muted">Nada sobre el horizonte ahora mismo.</li>
+        }
+      </ul>
+    </section>
+  }
+
+  @if (selected(); as sat) {
+    <aside class="panel">
+      <header>
+        <h2>{{ sat.name }}</h2>
+        <button (click)="deselect()" aria-label="cerrar">✕</button>
+      </header>
+      <dl>
+        <div><dt>Altitud</dt><dd>{{ sat.altKm | number: '1.0-0' }} km</dd></div>
+        <div><dt>Velocidad</dt><dd>{{ sat.speed | number: '1.2-2' }} km/s</dd></div>
+        <div><dt>Período orbital</dt><dd>{{ sat.periodMin | number: '1.0-0' }} min</dd></div>
+        <div><dt>Inclinación</dt><dd>{{ sat.inclDeg | number: '1.1-1' }}°</dd></div>
+        <div><dt>Latitud</dt><dd>{{ sat.lat | number: '1.2-2' }}°</dd></div>
+        <div><dt>Longitud</dt><dd>{{ sat.lng | number: '1.2-2' }}°</dd></div>
+      </dl>
+      <section class="passes">
+        <h3>Próximos pases sobre vos</h3>
+        @if (!observer()) {
+          <p class="hint">Tocá “📍 ¿Qué tengo sobre mí?” para calcular cuándo pasa sobre tu ubicación.</p>
+        } @else {
+          <ul>
+            @for (p of passes(); track p.start) {
+              <li>
+                <div class="when">{{ p.start | date: 'dd/MM HH:mm' }}</div>
+                <div class="detail">
+                  máx {{ p.maxElevation | number: '1.0-0' }}° ·
+                  {{ compass(p.startAz) }}→{{ compass(p.endAz) }} ·
+                  {{ p.durationMin | number: '1.0-0' }} min
+                </div>
+              </li>
+            } @empty {
+              <li class="muted">Sin pases visibles en las próximas 48 h.</li>
+            }
+          </ul>
+        }
+      </section>
+      <p class="hint">La línea celeste es su órbita (una vuelta completa).</p>
+    </aside>
+  }
+</div>
