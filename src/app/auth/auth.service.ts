@@ -41,6 +41,19 @@ export class AuthService {
     this._user.set(null);
   }
 
+  updateProfile(patch: Partial<Pick<User, 'display_name' | 'home_lat' | 'home_lng' | 'viz_mode' | 'avatar'>>): Observable<User> {
+    return this.http.patch<User>('/api/me', patch).pipe(tap((u) => this._user.set(u)));
+  }
+
+  uploadAvatar(file: File): Observable<User> {
+    const form = new FormData();
+    form.append('file', file);
+    return this.http.post<{ avatar: string; user: User }>('/api/avatar', form).pipe(
+      map((res) => res.user),
+      tap((u) => this._user.set(u)),
+    );
+  }
+
   // Recupera el user autenticado a partir del token guardado. Llamada desde
   // el appInitializer (ver app.config.ts) para bloquear la navegación
   // inicial del router hasta que la sesión esté resuelta. Si el token ya no

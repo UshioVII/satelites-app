@@ -108,3 +108,39 @@ describe('AuthService', () => {
     });
   });
 });
+
+describe('AuthService perfil', () => {
+  let svc: AuthService;
+  let http: HttpTestingController;
+  const USER = { id: 1, email: 'a@b.com', display_name: 'Ana', home_lat: null, home_lng: null, viz_mode: 'points', avatar: 'preset:earth' };
+
+  beforeEach(() => {
+    localStorage.clear();
+    TestBed.configureTestingModule({ providers: [AuthService, provideHttpClient(), provideHttpClientTesting()] });
+    svc = TestBed.inject(AuthService);
+    http = TestBed.inject(HttpTestingController);
+  });
+
+  it('updateProfile hace PATCH /api/me y actualiza user', () => {
+    svc.updateProfile({ display_name: 'Ana G' }).subscribe();
+    const req = http.expectOne('/api/me');
+    expect(req.request.method).toBe('PATCH');
+    expect(req.request.body).toEqual({ display_name: 'Ana G' });
+    req.flush({ ...USER, display_name: 'Ana G' });
+    expect(svc.user()?.display_name).toBe('Ana G');
+  });
+
+  it('uploadAvatar hace POST /api/avatar con FormData y actualiza user', () => {
+    const file = new File([new Uint8Array([1, 2, 3])], 'p.png', { type: 'image/png' });
+    let got: any;
+    svc.uploadAvatar(file).subscribe((u) => (got = u));
+    const req = http.expectOne('/api/avatar');
+    expect(req.request.method).toBe('POST');
+    expect(req.request.body instanceof FormData).toBe(true);
+    req.flush({ avatar: '/media/x.png', user: { ...USER, avatar: '/media/x.png' } });
+    expect(got.avatar).toBe('/media/x.png');
+    expect(svc.user()?.avatar).toBe('/media/x.png');
+  });
+
+  afterEach(() => http.verify());
+});
