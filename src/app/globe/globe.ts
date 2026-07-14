@@ -12,6 +12,8 @@ import GlobeGl from 'globe.gl';
 import { SatellitesService, Sat, PosSat, OverheadSat, Pass, compass } from '../satellites.service';
 import { SatInfo } from '../sat/sat-info';
 
+export type VizMode = 'points' | 'heatmap' | 'hexbin';
+
 @Component({
   selector: 'app-globe',
   imports: [DecimalPipe, DatePipe, SatInfo],
@@ -31,6 +33,7 @@ export class Globe implements OnDestroy {
   readonly overhead = signal<OverheadSat[]>([]); // satelites sobre vos ahora
   readonly passes = signal<Pass[]>([]); // proximos pases del satelite seleccionado sobre vos
   readonly geoError = signal('');
+  readonly vizMode = signal<VizMode>('points');
 
   readonly compass = compass; // para el template
 
@@ -81,7 +84,21 @@ export class Globe implements OnDestroy {
       .ringColor(() => '#39ff88')
       .ringMaxRadius(5)
       .ringPropagationSpeed(2)
-      .ringRepeatPeriod(700);
+      .ringRepeatPeriod(700)
+      // heatmap (densidad)
+      .heatmapPointLat((d: any) => d.lat)
+      .heatmapPointLng((d: any) => d.lng)
+      .heatmapPointWeight(1)
+      .heatmapBandwidth(2.5)
+      .heatmapBaseAltitude(0.005)
+      // hexbin (agregación)
+      .hexBinPointLat((d: any) => d.lat)
+      .hexBinPointLng((d: any) => d.lng)
+      .hexBinPointWeight(1)
+      .hexBinResolution(3)
+      .hexAltitude((d: any) => Math.min(0.1, d.sumWeight * 0.002))
+      .hexTopColor(() => 'rgba(0, 229, 255, 0.9)')
+      .hexSideColor(() => 'rgba(0, 229, 255, 0.35)');
 
     this.globe.controls().autoRotate = true;
     this.globe.controls().autoRotateSpeed = 0.5;
@@ -95,7 +112,23 @@ export class Globe implements OnDestroy {
     if (this.observer()) this.updateOverhead(); // el overhead sigue vivo aunque haya seleccion
     if (this.selected()) return; // congelado si hay un satelite seleccionado
     this.points = this.sats.positionsAt(this.tles, new Date());
-    this.globe.pointsData(this.points);
+    this.applyViz();
+  }
+
+  // Aplica la capa activa según vizMode (guardado si el globo aún no existe: tests/jsdom).
+  private applyViz() {
+    if (!this.globe) return;
+    const pts = this.points;
+    const mode = this.vizMode();
+    this.globe.pointsData(mode === 'points' ? pts : []);
+    this.globe.heatmapsData(mode === 'heatmap' ? [pts] : []);
+    this.globe.hexBinPointsData(mode === 'hexbin' ? pts : []);
+  }
+
+  changeViz(mode: VizMode) {
+    this.vizMode.set(mode);
+    this.applyViz();
+    // (persistencia: se agrega en Task 2)
   }
 
   private select(d: PosSat) {

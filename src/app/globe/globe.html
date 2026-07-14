@@ -26,6 +26,11 @@
     @if (geoError()) {
       <div class="err">{{ geoError() }}</div>
     }
+    <div class="viz">
+      <button [class.on]="vizMode() === 'points'" (click)="changeViz('points')">Puntos</button>
+      <button [class.on]="vizMode() === 'heatmap'" (click)="changeViz('heatmap')">Calor</button>
+      <button [class.on]="vizMode() === 'hexbin'" (click)="changeViz('hexbin')">Hexágonos</button>
+    </div>
   </div>
 
   @if (observer()) {

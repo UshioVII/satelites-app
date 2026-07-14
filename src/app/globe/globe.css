@@ -219,3 +219,10 @@
 .overhead .muted {
   color: #6b727c;
 }
+
+.viz { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
+.viz button {
+  background: #16233a; color: #9fb3c8; border: 1px solid #2a3a52;
+  border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem;
+}
+.viz button.on { background: #00e5ff; color: #051018; border-color: #00e5ff; }
