@@ -12,21 +12,36 @@ module.exports = function routesNotes(db) {
   `);
   const del = db.prepare('DELETE FROM notes WHERE user_id = ? AND norad_id = ?');
 
+  function parseNoradId(req, res) {
+    const id = Number(req.params.norad_id);
+    if (!Number.isInteger(id)) {
+      res.status(400).json({ error: 'norad_id inválido' });
+      return null;
+    }
+    return id;
+  }
+
   router.get('/:norad_id', (req, res) => {
-    const note = get.get(req.user.id, Number(req.params.norad_id));
+    const id = parseNoradId(req, res);
+    if (id === null) return;
+    const note = get.get(req.user.id, id);
     if (!note) return res.status(404).json({ error: 'sin nota' });
     res.json(note);
   });
 
   router.put('/:norad_id', (req, res) => {
+    const id = parseNoradId(req, res);
+    if (id === null) return;
     const body = String(req.body?.body ?? '').trim();
     if (!body) return res.status(400).json({ error: 'nota vacía' });
-    upsert.run(req.user.id, Number(req.params.norad_id), body);
-    res.json(get.get(req.user.id, Number(req.params.norad_id)));
+    upsert.run(req.user.id, id, body);
+    res.json(get.get(req.user.id, id));
   });
 
   router.delete('/:norad_id', (req, res) => {
-    del.run(req.user.id, Number(req.params.norad_id));
+    const id = parseNoradId(req, res);
+    if (id === null) return;
+    del.run(req.user.id, id);
     res.status(204).end();
   });
 

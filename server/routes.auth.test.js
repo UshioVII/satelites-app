@@ -61,6 +61,14 @@ test('login con password mal da 401', async () => {
   close();
 });
 
+test('email se normaliza: registro con mayúsculas, login en minúsculas', async () => {
+  const { base, close } = await boot();
+  await fetch(`${base}/api/register`, { method: 'POST', ...json({ email: 'Ana@B.com', password: '12345678', display_name: 'Ana' }) });
+  const r = await fetch(`${base}/api/login`, { method: 'POST', ...json({ email: 'ana@b.com', password: '12345678' }) });
+  assert.equal(r.status, 200);
+  close();
+});
+
 test('PATCH /me actualiza viz_mode y preset de avatar', async () => {
   const { base, close } = await boot();
   const reg = await (await fetch(`${base}/api/register`, { method: 'POST', ...json({ email: 'a@b.com', password: '12345678', display_name: 'Ana' }) })).json();

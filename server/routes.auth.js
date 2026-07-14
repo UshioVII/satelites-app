@@ -14,7 +14,8 @@ module.exports = function routesAuth(db) {
   const byId = db.prepare(`SELECT ${PUBLIC_COLS} FROM users WHERE id = ?`);
 
   router.post('/register', (req, res) => {
-    const { email, password, display_name } = req.body || {};
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const { password, display_name } = req.body || {};
     const err = registerErrors({ email, password, display_name });
     if (err) return res.status(400).json({ error: err });
     if (byEmail.get(email)) return res.status(409).json({ error: 'email ya registrado' });
@@ -24,7 +25,8 @@ module.exports = function routesAuth(db) {
   });
 
   router.post('/login', (req, res) => {
-    const { email, password } = req.body || {};
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    const { password } = req.body || {};
     if (!isEmail(email) || typeof password !== 'string') return res.status(400).json({ error: 'datos inválidos' });
     const row = byEmail.get(email);
     if (!row || !verifyPassword(password, row.password_hash)) return res.status(401).json({ error: 'credenciales inválidas' });

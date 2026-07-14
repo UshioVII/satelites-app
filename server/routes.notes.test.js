@@ -41,3 +41,10 @@ test('PUT con body vacío da 400', async () => {
   assert.equal(r.status, 400);
   close();
 });
+
+test('GET con norad_id no numérico da 400', async () => {
+  const { base, h, close } = await bootWithUser();
+  const r = await fetch(`${base}/api/notes/abc`, { headers: h });
+  assert.equal(r.status, 400);
+  close();
+});
