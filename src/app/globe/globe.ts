@@ -78,8 +78,8 @@ export class Globe implements OnDestroy {
       .pointLat('lat')
       .pointLng('lng')
       .pointAltitude(0.01)
-      .pointRadius((d: any) => (this.selected()?.name === d.name ? 0.7 : 0.32))
-      .pointColor((d: any) => (this.selected()?.name === d.name ? '#00e5ff' : '#ffffff'))
+      .pointRadius((d: any) => (this.selected()?.norad === d.norad ? 0.7 : 0.32))
+      .pointColor((d: any) => (this.selected()?.norad === d.norad ? '#00e5ff' : '#ffffff'))
       .pointsTransitionDuration(0)
       .onPointClick((d: any) => this.select(d))
       .onGlobeClick(() => this.deselect())
@@ -130,7 +130,7 @@ export class Globe implements OnDestroy {
     // El seleccionado y el resto siguen moviéndose: refrescamos su posición/telemetría en vivo.
     const sel = this.selected();
     if (sel) {
-      const fresh = this.points.find((p) => p.name === sel.name);
+      const fresh = this.points.find((p) => p.norad === sel.norad);
       if (fresh) this.selected.set(fresh);
     }
   }
@@ -157,8 +157,8 @@ export class Globe implements OnDestroy {
     this.selected.set(d);
     this.updateAutoRotate();
     this.applyViz();
-    const sat = this.tles.find((s) => s.name === d.name);
-    this.selectedNorad.set(sat ? Number(sat.satrec.satnum) : null);
+    const sat = this.tles.find((s) => Number(s.satrec.satnum) === d.norad);
+    this.selectedNorad.set(d.norad);
     this.globe.pathsData(sat ? [this.sats.orbitPath(sat, new Date())] : []);
     this.updatePasses(sat);
   }
@@ -176,7 +176,7 @@ export class Globe implements OnDestroy {
   // Recalcula los proximos pases del satelite seleccionado sobre tu ubicacion.
   private updatePasses(sat?: Sat) {
     const o = this.observer();
-    const s = sat ?? this.tles.find((t) => t.name === this.selected()?.name);
+    const s = sat ?? this.tles.find((t) => Number(t.satrec.satnum) === this.selected()?.norad);
     this.passes.set(o && s ? this.sats.nextPasses(s, o.lat, o.lng, new Date()) : []);
   }
 

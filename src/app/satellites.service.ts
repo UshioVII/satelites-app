@@ -11,6 +11,7 @@ export interface Sat {
 // Un satelite posicionado en un instante, con telemetria
 export interface PosSat {
   name: string;
+  norad: number; // NORAD id (satnum) — identidad estable; los nombres se repiten en el set visual
   lat: number;
   lng: number;
   alt: number; // altitud relativa al radio terrestre (para globe.gl)
@@ -104,6 +105,7 @@ export class SatellitesService {
           : 0;
       out.push({
         name: s.name,
+        norad: Number(s.satrec.satnum),
         lat: satellite.degreesLat(geo.latitude),
         lng: satellite.degreesLong(geo.longitude),
         alt: geo.height / 6371,
