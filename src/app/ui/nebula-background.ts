@@ -22,16 +22,20 @@ import { Component, ElementRef, OnDestroy, OnInit, viewChild } from '@angular/co
 })
 export class NebulaBackground implements OnInit, OnDestroy {
   private cv = viewChild.required<ElementRef<HTMLCanvasElement>>('cv');
+  private ctx!: CanvasRenderingContext2D;
   private raf = 0;
   private stars: { x: number; y: number; r: number; a: number; s: number; tw: number }[] = [];
   private w = 0; private h = 0; private dpr = Math.min(devicePixelRatio || 1, 2);
   private onResize = () => this.resize();
 
   ngOnInit() {
+    const ctx = this.cv().nativeElement.getContext('2d');
+    if (!ctx) return; // sin canvas real (jsdom): no-op, nada que animar
+    this.ctx = ctx;
     this.resize();
     addEventListener('resize', this.onResize);
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) this.frame();
-    else this.draw(); // un frame estático
+    const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce) this.frame(); else this.draw();
   }
   ngOnDestroy() { cancelAnimationFrame(this.raf); removeEventListener('resize', this.onResize); }
 
@@ -45,7 +49,7 @@ export class NebulaBackground implements OnInit, OnDestroy {
     }));
   }
   private draw() {
-    const x = this.cv().nativeElement.getContext('2d')!;
+    const x = this.ctx;
     x.clearRect(0, 0, this.w, this.h);
     for (const st of this.stars) {
       st.a += st.s * st.tw; if (st.a > 1 || st.a < 0.1) st.tw *= -1;
