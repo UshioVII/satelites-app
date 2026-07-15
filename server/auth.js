@@ -4,10 +4,17 @@ const jwt = require('jsonwebtoken');
 let SECRET = process.env.JWT_SECRET;
 if (!SECRET) {
   if (process.env.NODE_ENV === 'production') throw new Error('JWT_SECRET es obligatorio en producción');
-  // ponytail: en dev sin secreto usamos uno aleatorio efímero (los tokens no sobreviven a reinicios).
-  // Cierra el forjado de tokens con el default público. Seteá JWT_SECRET para tokens estables.
-  SECRET = require('node:crypto').randomBytes(32).toString('hex');
-  console.warn('[auth] JWT_SECRET no seteado: secreto aleatorio efímero. Seteá JWT_SECRET para persistir sesiones.');
+  // En dev, sin JWT_SECRET, persistimos un secreto en disco (server/.jwt-secret, gitignored) para que
+  // las sesiones sobrevivan a los reinicios del server. Cierra el forjado con el default público.
+  const fs = require('node:fs');
+  const secretFile = require('node:path').join(__dirname, '.jwt-secret');
+  if (fs.existsSync(secretFile)) {
+    SECRET = fs.readFileSync(secretFile, 'utf8').trim();
+  } else {
+    SECRET = require('node:crypto').randomBytes(32).toString('hex');
+    fs.writeFileSync(secretFile, SECRET, { mode: 0o600 });
+    console.warn('[auth] Generé un JWT secret de dev en server/.jwt-secret (persistente entre reinicios).');
+  }
 }
 const PUBLIC_COLS = 'id, email, display_name, home_lat, home_lng, viz_mode, avatar';
 

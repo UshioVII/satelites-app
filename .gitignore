@@ -47,4 +47,5 @@ Thumbs.db
 /server/data.db
 /server/data.db-*
 /server/media/
+/server/.jwt-secret
 .env
