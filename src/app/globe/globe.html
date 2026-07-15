@@ -10,9 +10,6 @@
 
   <div class="hud">
     @switch (loadState()) {
-      @case ('loading') {
-        <div>🛰️ Cargando satélites…</div>
-      }
       @case ('ok') {
         <div>🛰️ {{ count() }} satélites {{ live() ? 'en vivo' : 'en órbita' }}</div>
         @if (!live()) {
