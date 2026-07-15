@@ -36,6 +36,7 @@
           class="fav-color"
           type="color"
           [value]="f.color ?? '#00e5ff'"
+          [style.color]="f.color ?? '#00e5ff'"
           (change)="setColor(f, $any($event.target).value)"
           title="Color del satélite en el globo"
         />

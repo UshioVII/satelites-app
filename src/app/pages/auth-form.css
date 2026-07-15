@@ -2,29 +2,31 @@
   max-width: 22rem;
   margin: 3rem auto;
   padding: 1.5rem;
-  background: #0b0f1a;
-  border: 1px solid #1e2636;
-  border-radius: 12px;
-  color: #e6f1ff;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: var(--ink);
 }
-.card h1 { margin: 0 0 1rem; font-size: 1.3rem; }
+.card h1 { margin: 0 0 1rem; font-size: 1.3rem; color: var(--cyan); }
 .card form { display: flex; flex-direction: column; gap: 0.6rem; }
 .card input {
   padding: 0.6rem;
-  background: #060911;
-  border: 1px solid #1e2636;
-  border-radius: 8px;
-  color: #e6f1ff;
+  background: var(--surface-solid);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink);
 }
 .card button {
   padding: 0.6rem;
-  background: #00e5ff;
-  color: #051018;
+  background: var(--brand);
+  color: #04121a;
   border: none;
-  border-radius: 8px;
+  border-radius: 3px;
   font-weight: 700;
   cursor: pointer;
 }
 .card button:disabled { opacity: 0.5; cursor: not-allowed; }
-.card .err { color: #ff6b6b; }
-.card a { color: #00e5ff; }
+.card .err { color: var(--danger); }
+.card a { color: var(--cyan); }

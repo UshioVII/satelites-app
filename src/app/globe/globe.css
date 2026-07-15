@@ -237,3 +237,7 @@
   border-radius: 2px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem;
 }
 .viz button.on { background: var(--brand); color: #04121a; box-shadow: 0 0 18px -4px rgba(0,229,255,0.7); }
+
+@media (prefers-reduced-motion: reduce) {
+  .panel, .overhead, .spinner { animation: none; }
+}
