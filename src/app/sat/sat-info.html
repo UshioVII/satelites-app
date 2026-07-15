@@ -20,7 +20,13 @@
     <div class="notes">
       <label>Mis notas</label>
       <textarea [ngModel]="note()" (ngModelChange)="note.set($event)" rows="3" placeholder="Anotá algo sobre este satélite…"></textarea>
-      <button (click)="saveNote()">Guardar nota</button>
+      <div class="note-actions">
+        <button (click)="saveNote()">Guardar nota</button>
+        @if (note().trim()) {
+          <button class="secondary" (click)="deleteNote()">Borrar</button>
+        }
+      </div>
+      @if (noteMsg()) { <span class="favmsg">{{ noteMsg() }}</span> }
     </div>
   } @else {
     <p class="muted">Iniciá sesión para guardar favoritos y notas.</p>

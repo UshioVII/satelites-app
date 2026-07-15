@@ -10,3 +10,5 @@
 .notes textarea { background: #060911; border: 1px solid #1e2636; border-radius: 8px; color: #e6f1ff; padding: 0.4rem; resize: vertical; }
 .notes button, .fav { align-self: flex-start; }
 .notes button { background: #00e5ff; color: #051018; border: none; border-radius: 6px; padding: 0.3rem 0.7rem; cursor: pointer; }
+.note-actions { display: flex; gap: 0.4rem; }
+.notes .secondary { background: #16233a; color: #9fb3c8; }

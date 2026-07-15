@@ -24,6 +24,7 @@ export class SatInfo {
   readonly summary = signal<WikiSummary | null>(null);
   readonly note = signal('');
   readonly favMsg = signal('');
+  readonly noteMsg = signal('');
 
   constructor() {
     // Wikipedia: refetch cuando cambia el nombre.
@@ -41,6 +42,7 @@ export class SatInfo {
       const id = this.noradId();
       this.note.set('');
       this.favMsg.set('');
+      this.noteMsg.set('');
       if (this.auth.isLoggedIn()) {
         this.notesApi.get(id).subscribe((nt) => this.note.set(nt?.body ?? ''));
       }
@@ -48,7 +50,22 @@ export class SatInfo {
   }
 
   saveNote() {
-    this.notesApi.save(this.noradId(), this.note()).subscribe();
+    const body = this.note().trim();
+    if (!body) return this.deleteNote(); // guardar vacío = borrar la nota
+    this.notesApi.save(this.noradId(), body).subscribe({
+      next: () => this.noteMsg.set('✓ Guardada'),
+      error: () => this.noteMsg.set('No se pudo guardar'),
+    });
+  }
+
+  deleteNote() {
+    this.notesApi.remove(this.noradId()).subscribe({
+      next: () => {
+        this.note.set('');
+        this.noteMsg.set('Nota borrada');
+      },
+      error: () => this.noteMsg.set('No se pudo borrar'),
+    });
   }
 
   addFavorite() {
