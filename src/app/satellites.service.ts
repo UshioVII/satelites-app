@@ -97,8 +97,12 @@ export class SatellitesService {
       const pv = satellite.propagate(s.satrec, date);
       const pos = pv?.position;
       const vel = pv?.velocity;
-      if (!pos || typeof pos === 'boolean') continue;
+      // satrec.error lo setea SGP4 tras propagar (p. ej. objeto decaído). Sin posición o con error: fuera.
+      if (!pos || typeof pos === 'boolean' || s.satrec.error) continue;
       const geo = satellite.eciToGeodetic(pos, gmst);
+      // Con TLEs viejos (o de objetos decaídos como COSMOS 1408) SGP4 diverge y devuelve altitudes
+      // absurdas (cientos de miles de km) que se dibujan como órbitas basura. Descartamos lo no físico.
+      if (!Number.isFinite(geo.height) || geo.height < 80 || geo.height > 100000) continue;
       const speed =
         vel && typeof vel !== 'boolean'
           ? Math.hypot(vel.x, vel.y, vel.z) // km/s = modulo del vector velocidad
@@ -126,8 +130,9 @@ export class SatellitesService {
       const t = new Date(date.getTime() + periodMs * (i / steps));
       const pv = satellite.propagate(sat.satrec, t);
       const pos = pv?.position;
-      if (!pos || typeof pos === 'boolean') continue;
+      if (!pos || typeof pos === 'boolean' || sat.satrec.error) continue;
       const geo = satellite.eciToGeodetic(pos, satellite.gstime(t));
+      if (!Number.isFinite(geo.height) || geo.height < 80 || geo.height > 100000) continue; // ídem positionsAt: sin basura
       pts.push({ lat: satellite.degreesLat(geo.latitude), lng: satellite.degreesLong(geo.longitude) });
     }
     return pts;
