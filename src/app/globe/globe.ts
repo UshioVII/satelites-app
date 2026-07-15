@@ -12,6 +12,7 @@ import GlobeGl from 'globe.gl';
 import { SatellitesService, Sat, PosSat, OverheadSat, Pass, compass } from '../satellites.service';
 import { SatInfo } from '../sat/sat-info';
 import { AuthService } from '../auth/auth.service';
+import { FavoritesService } from '../favorites/favorites.service';
 import { dedupeSats } from './globe.util';
 
 export type VizMode = 'points' | 'heatmap';
@@ -25,6 +26,7 @@ export type VizMode = 'points' | 'heatmap';
 export class Globe implements OnDestroy {
   private sats = inject(SatellitesService);
   private auth = inject(AuthService);
+  private favs = inject(FavoritesService);
   private globeEl = viewChild.required<ElementRef<HTMLDivElement>>('globe');
 
   readonly count = signal(0);
@@ -51,6 +53,7 @@ export class Globe implements OnDestroy {
     if (saved === 'points' || saved === 'heatmap') {
       this.vizMode.set(saved);
     }
+    if (this.auth.isLoggedIn()) this.favs.reload(); // colores de favoritos para pintarlos en el globo
     this.loadSatellites();
     afterNextRender(() => this.initGlobe());
   }
@@ -80,12 +83,17 @@ export class Globe implements OnDestroy {
       .pointLat('lat')
       .pointLng('lng')
       .pointAltitude(0.01)
-      .pointRadius((d: any) =>
-        this.selected()?.norad === d.norad ? 0.7 : this.vizMode() === 'points' ? 0.32 : 0.18,
-      )
-      .pointColor((d: any) =>
-        this.selected()?.norad === d.norad ? '#00e5ff' : this.vizMode() === 'points' ? '#ffffff' : 'rgba(255,255,255,0.35)',
-      )
+      .pointRadius((d: any) => {
+        if (this.selected()?.norad === d.norad) return 0.7;
+        if (this.favs.colorByNorad().has(d.norad)) return 0.5; // los favoritos resaltan un poco más
+        return this.vizMode() === 'points' ? 0.32 : 0.18;
+      })
+      .pointColor((d: any) => {
+        if (this.selected()?.norad === d.norad) return '#00e5ff';
+        const fav = this.favs.colorByNorad().get(d.norad);
+        if (fav) return fav; // el favorito se pinta con su color elegido
+        return this.vizMode() === 'points' ? '#ffffff' : 'rgba(255,255,255,0.35)';
+      })
       .pointsTransitionDuration(0)
       .onPointClick((d: any) => this.select(d))
       .onGlobeClick(() => this.deselect())

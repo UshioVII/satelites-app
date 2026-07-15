@@ -26,6 +26,7 @@ function migrate(db) {
       user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       norad_id   INTEGER NOT NULL,
       sat_name   TEXT NOT NULL,
+      color      TEXT,
       archived   INTEGER NOT NULL DEFAULT 0,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(user_id, norad_id)
@@ -38,6 +39,9 @@ function migrate(db) {
       PRIMARY KEY (user_id, norad_id)
     );
   `);
+  // Migración para DBs viejas: agregar favorites.color si no existe.
+  const favCols = db.prepare('PRAGMA table_info(favorites)').all().map((c) => c.name);
+  if (!favCols.includes('color')) db.exec('ALTER TABLE favorites ADD COLUMN color TEXT');
 }
 
 module.exports = { openDb };

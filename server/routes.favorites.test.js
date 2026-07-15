@@ -32,6 +32,22 @@ test('crear, listar, archivar y borrar favorito', async () => {
   close();
 });
 
+test('color: asigna automático si no se manda, y PATCH lo cambia', async () => {
+  const { base, h, close } = await bootWithUser();
+  // sin color -> se asigna uno hex de la paleta
+  const a = await (await fetch(`${base}/api/favorites`, { method: 'POST', headers: h, body: JSON.stringify({ norad_id: 1, sat_name: 'A' }) })).json();
+  assert.match(a.color, /^#[0-9a-f]{6}$/);
+  // color elegido -> se respeta
+  const b = await (await fetch(`${base}/api/favorites`, { method: 'POST', headers: h, body: JSON.stringify({ norad_id: 2, sat_name: 'B', color: '#123ABC' }) })).json();
+  assert.equal(b.color, '#123abc');
+  // PATCH cambia el color; hex inválido da 400
+  const p = await (await fetch(`${base}/api/favorites/${a.id}`, { method: 'PATCH', headers: h, body: JSON.stringify({ color: '#00ff00' }) })).json();
+  assert.equal(p.color, '#00ff00');
+  const bad = await fetch(`${base}/api/favorites/${a.id}`, { method: 'PATCH', headers: h, body: JSON.stringify({ color: 'rojo' }) });
+  assert.equal(bad.status, 400);
+  close();
+});
+
 test('favorito duplicado da 409', async () => {
   const { base, h, close } = await bootWithUser();
   const body = JSON.stringify({ norad_id: 25544, sat_name: 'ISS' });

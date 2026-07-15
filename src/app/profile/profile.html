@@ -32,6 +32,13 @@
   <ul class="favs">
     @for (f of active(); track f.id) {
       <li>
+        <input
+          class="fav-color"
+          type="color"
+          [value]="f.color ?? '#00e5ff'"
+          (change)="setColor(f, $any($event.target).value)"
+          title="Color del satélite en el globo"
+        />
         <span>{{ f.sat_name }}</span>
         <span class="actions">
           <button (click)="toggleArchive(f)">Archivar</button>

@@ -1,25 +1,42 @@
 const express = require('express');
 const { requireAuth } = require('./auth');
 
+// Paleta para asignar un color automático a un favorito cuando el usuario no elige uno.
+const PALETTE = [
+  '#ff5252', '#ff9800', '#ffd600', '#00e676', '#00e5ff', '#2979ff',
+  '#d500f9', '#ff4081', '#8bc34a', '#26a69a', '#b388ff', '#ff8a65',
+];
+const isHex = (c) => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c);
+
+// Elige un color de la paleta que el usuario no esté usando; si ya usó todos, uno al azar.
+function pickColor(used) {
+  const free = PALETTE.filter((c) => !used.has(c));
+  const pool = free.length ? free : PALETTE;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
 module.exports = function routesFavorites(db) {
   const router = express.Router();
   router.use(requireAuth(db));
 
-  const list = db.prepare('SELECT id, norad_id, sat_name, archived, created_at FROM favorites WHERE user_id = ? ORDER BY created_at DESC');
-  const byId = db.prepare('SELECT id, norad_id, sat_name, archived, created_at FROM favorites WHERE id = ? AND user_id = ?');
-  const insert = db.prepare('INSERT INTO favorites (user_id, norad_id, sat_name) VALUES (?, ?, ?)');
-  const setArchived = db.prepare('UPDATE favorites SET archived = ? WHERE id = ? AND user_id = ?');
+  const cols = 'id, norad_id, sat_name, color, archived, created_at';
+  const list = db.prepare(`SELECT ${cols} FROM favorites WHERE user_id = ? ORDER BY created_at DESC`);
+  const byId = db.prepare(`SELECT ${cols} FROM favorites WHERE id = ? AND user_id = ?`);
+  const insert = db.prepare('INSERT INTO favorites (user_id, norad_id, sat_name, color) VALUES (?, ?, ?, ?)');
+  const usedColors = db.prepare('SELECT color FROM favorites WHERE user_id = ? AND color IS NOT NULL');
   const del = db.prepare('DELETE FROM favorites WHERE id = ? AND user_id = ?');
 
   router.get('/', (req, res) => res.json(list.all(req.user.id)));
 
   router.post('/', (req, res) => {
-    const { norad_id, sat_name } = req.body || {};
+    const { norad_id, sat_name, color } = req.body || {};
     if (!Number.isInteger(norad_id) || !String(sat_name || '').trim()) {
       return res.status(400).json({ error: 'norad_id (entero) y sat_name requeridos' });
     }
+    // Color elegido por el usuario, o uno automático no repetido si no mandó ninguno válido.
+    const c = isHex(color) ? color.toLowerCase() : pickColor(new Set(usedColors.all(req.user.id).map((r) => r.color)));
     try {
-      const info = insert.run(req.user.id, norad_id, String(sat_name).trim());
+      const info = insert.run(req.user.id, norad_id, String(sat_name).trim(), c);
       res.status(201).json(byId.get(info.lastInsertRowid, req.user.id));
     } catch (e) {
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'ya está en favoritos' });
@@ -28,8 +45,20 @@ module.exports = function routesFavorites(db) {
   });
 
   router.patch('/:id', (req, res) => {
-    const archived = req.body?.archived ? 1 : 0;
-    const info = setArchived.run(archived, req.params.id, req.user.id);
+    const sets = [];
+    const args = [];
+    if (req.body?.archived !== undefined) {
+      sets.push('archived = ?');
+      args.push(req.body.archived ? 1 : 0);
+    }
+    if (req.body?.color !== undefined) {
+      if (!isHex(req.body.color)) return res.status(400).json({ error: 'color inválido (hex #rrggbb)' });
+      sets.push('color = ?');
+      args.push(String(req.body.color).toLowerCase());
+    }
+    if (!sets.length) return res.status(400).json({ error: 'nada para actualizar' });
+    args.push(req.params.id, req.user.id);
+    const info = db.prepare(`UPDATE favorites SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(...args);
     if (!info.changes) return res.status(404).json({ error: 'no encontrado' });
     res.json(byId.get(req.params.id, req.user.id));
   });

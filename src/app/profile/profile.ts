@@ -16,7 +16,7 @@ export class Profile {
   protected auth = inject(AuthService);
 
   readonly presets = PRESETS;
-  readonly favorites = signal<Favorite[]>([]);
+  readonly favorites = this.favs.items; // caché compartida con el globo
   readonly active = computed(() => this.favorites().filter((f) => !f.archived));
   readonly archived = computed(() => this.favorites().filter((f) => f.archived));
   readonly saved = signal(false);
@@ -29,11 +29,7 @@ export class Profile {
   });
 
   constructor() {
-    this.reload();
-  }
-
-  reload() {
-    this.favs.list().subscribe((f) => this.favorites.set(f));
+    this.favs.reload();
   }
 
   saveProfile() {
@@ -57,10 +53,14 @@ export class Profile {
   }
 
   toggleArchive(f: Favorite) {
-    this.favs.setArchived(f.id, !f.archived).subscribe(() => this.reload());
+    this.favs.setArchived(f.id, !f.archived).subscribe();
   }
 
   removeFav(f: Favorite) {
-    this.favs.remove(f.id).subscribe(() => this.reload());
+    this.favs.remove(f.id).subscribe();
+  }
+
+  setColor(f: Favorite, color: string) {
+    this.favs.setColor(f.id, color).subscribe();
   }
 }

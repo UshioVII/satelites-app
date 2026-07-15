@@ -10,8 +10,9 @@
 .edit button, .actions button { padding: 0.4rem 0.8rem; background: #00e5ff; color: #051018; border: none; border-radius: 6px; cursor: pointer; }
 .ok { color: #39ff88; }
 .favs { list-style: none; padding: 0; }
-.favs li { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #1e2636; }
-.actions { display: flex; gap: 0.4rem; }
+.favs li { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #1e2636; }
+.fav-color { width: 1.6rem; height: 1.6rem; padding: 0; border: none; border-radius: 6px; background: none; cursor: pointer; flex: none; }
+.actions { display: flex; gap: 0.4rem; margin-left: auto; }
 .actions button { background: #16233a; color: #9fb3c8; }
 .archived { opacity: 0.6; }
 .empty { color: #5b6b7f; }
