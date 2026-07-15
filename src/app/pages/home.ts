@@ -24,7 +24,8 @@ import { RouterLink } from '@angular/router';
     </section>
   `,
   styles: [`
-    .hero { max-width: 46rem; margin: 3rem auto; padding: 0 1.2rem; color: #e6f1ff; }
+    .hero { max-width: 46rem; margin: 3rem auto; padding: 0 1.2rem; color: #e6f1ff; animation: hero-in 0.4s ease-out; }
+    @keyframes hero-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     .hero h1 { font-size: 2.4rem; margin: 0 0 0.5rem; }
     .lead { color: #9fb3c8; font-size: 1.1rem; line-height: 1.6; }
     .feats { color: #c8d6e5; line-height: 1.8; }

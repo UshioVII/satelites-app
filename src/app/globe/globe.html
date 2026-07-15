@@ -1,6 +1,13 @@
 <div class="wrap">
   <div #globe class="globe"></div>
 
+  @if (loadState() === 'loading') {
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Cargando satélites…</p>
+    </div>
+  }
+
   <div class="hud">
     @switch (loadState()) {
       @case ('loading') {
