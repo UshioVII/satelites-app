@@ -37,6 +37,7 @@ export class Globe implements OnDestroy {
   readonly passes = signal<Pass[]>([]); // proximos pases del satelite seleccionado sobre vos
   readonly geoError = signal('');
   readonly vizMode = signal<VizMode>('points');
+  readonly autoRotateOn = signal(false); // tierra quieta por defecto; el usuario prende la rotación
 
   readonly compass = compass; // para el template
 
@@ -78,8 +79,12 @@ export class Globe implements OnDestroy {
       .pointLat('lat')
       .pointLng('lng')
       .pointAltitude(0.01)
-      .pointRadius((d: any) => (this.selected()?.norad === d.norad ? 0.7 : 0.32))
-      .pointColor((d: any) => (this.selected()?.norad === d.norad ? '#00e5ff' : '#ffffff'))
+      .pointRadius((d: any) =>
+        this.selected()?.norad === d.norad ? 0.7 : this.vizMode() === 'points' ? 0.32 : 0.18,
+      )
+      .pointColor((d: any) =>
+        this.selected()?.norad === d.norad ? '#00e5ff' : this.vizMode() === 'points' ? '#ffffff' : 'rgba(255,255,255,0.35)',
+      )
       .pointsTransitionDuration(0)
       .onPointClick((d: any) => this.select(d))
       .onGlobeClick(() => this.deselect())
@@ -100,6 +105,7 @@ export class Globe implements OnDestroy {
       .heatmapPointWeight(1)
       .heatmapBandwidth(2.5)
       .heatmapBaseAltitude(0.005)
+      .heatmapsTransitionDuration(0) // sin animación: cada tick re-setea los datos y la transición parpadeaba
       // hexbin (agregación)
       .hexBinPointLat((d: any) => d.lat)
       .hexBinPointLng((d: any) => d.lng)
@@ -107,7 +113,8 @@ export class Globe implements OnDestroy {
       .hexBinResolution(3)
       .hexAltitude((d: any) => Math.min(0.1, d.sumWeight * 0.002))
       .hexTopColor(() => 'rgba(0, 229, 255, 0.9)')
-      .hexSideColor(() => 'rgba(0, 229, 255, 0.35)');
+      .hexSideColor(() => 'rgba(0, 229, 255, 0.35)')
+      .hexTransitionDuration(0); // ídem heatmap: sin animación por tick
 
     this.globe.controls().autoRotateSpeed = 0.5;
     this.updateAutoRotate();
@@ -116,10 +123,15 @@ export class Globe implements OnDestroy {
     this.tick();
   }
 
-  // El globo rota solo cuando no hay selección ni ubicación fijada (para leer quieto).
+  // Rota solo si el usuario lo prendió Y no hay selección ni ubicación fijada (para leer quieto).
   private updateAutoRotate() {
     if (!this.globe) return;
-    this.globe.controls().autoRotate = !this.selected() && !this.observer();
+    this.globe.controls().autoRotate = this.autoRotateOn() && !this.selected() && !this.observer();
+  }
+
+  toggleRotate() {
+    this.autoRotateOn.set(!this.autoRotateOn());
+    this.updateAutoRotate();
   }
 
   private tick() {
@@ -140,7 +152,7 @@ export class Globe implements OnDestroy {
     if (!this.globe) return;
     const pts = this.points;
     const mode = this.vizMode();
-    this.globe.pointsData(mode === 'points' ? pts : []);
+    this.globe.pointsData(pts); // siempre presentes: son la capa clickeable en todos los modos
     this.globe.heatmapsData(mode === 'heatmap' ? [pts] : []);
     this.globe.hexBinPointsData(mode === 'hexbin' ? pts : []);
   }

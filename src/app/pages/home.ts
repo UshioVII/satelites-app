@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'app-home',
@@ -18,7 +19,11 @@ import { RouterLink } from '@angular/router';
       </ul>
       <div class="cta">
         <a class="btn" routerLink="/globe">Ver el globo</a>
-        <a class="btn ghost" routerLink="/login">Entrar</a>
+        @if (auth.isLoggedIn()) {
+          <a class="btn ghost" routerLink="/profile">Mi perfil</a>
+        } @else {
+          <a class="btn ghost" routerLink="/login">Entrar</a>
+        }
       </div>
       <p class="stack">Angular 22 · globe.gl · satellite.js · Node/Express + SQLite</p>
     </section>
@@ -35,4 +40,6 @@ import { RouterLink } from '@angular/router';
     .stack { color: #5b6b7f; font-size: 0.85rem; }
   `],
 })
-export class Home {}
+export class Home {
+  readonly auth = inject(AuthService);
+}

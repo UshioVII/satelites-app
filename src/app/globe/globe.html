@@ -35,6 +35,9 @@
       <button [class.on]="vizMode() === 'heatmap'" (click)="changeViz('heatmap')">Calor</button>
       <button [class.on]="vizMode() === 'hexbin'" (click)="changeViz('hexbin')">Hexágonos</button>
     </div>
+    <button class="loc-btn" (click)="toggleRotate()">
+      {{ autoRotateOn() ? '⏸️ Detener rotación' : '🌍 Rotar globo' }}
+    </button>
   </div>
 
   @if (observer()) {
