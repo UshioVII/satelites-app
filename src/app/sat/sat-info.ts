@@ -1,13 +1,15 @@
-import { Component, effect, inject, input, signal } from '@angular/core';
+import { Component, computed, effect, inject, input, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DatePipe } from '@angular/common';
 import { WikiService, WikiSummary } from './wiki.service';
 import { NotesService } from './notes.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { AuthService } from '../auth/auth.service';
+import { Pass } from '../satellites.service';
 
 @Component({
   selector: 'app-sat-info',
-  imports: [FormsModule],
+  imports: [FormsModule, DatePipe],
   templateUrl: './sat-info.html',
   styleUrl: './sat-info.css',
 })
@@ -19,6 +21,11 @@ export class SatInfo {
 
   readonly name = input.required<string>();
   readonly noradId = input.required<number>();
+  // Próximos pases del satélite (calculados en Globe); solo presentación acá, sin lógica nueva.
+  readonly passes = input<Pass[]>([]);
+  readonly nextPass = computed<Pass | null>(() => this.passes()[0] ?? null);
+  // Escala vertical del perfil NASA (campana fija, ver sat-info.html): 90° de elevación = escala 1.
+  readonly peakScale = computed(() => Math.max(0, Math.min(1, (this.nextPass()?.maxElevation ?? 0) / 90)));
 
   readonly wikiState = signal<'loading' | 'ok' | 'none'>('loading');
   readonly summary = signal<WikiSummary | null>(null);

@@ -1,4 +1,9 @@
 .sat-info { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+.pass-plot { display: flex; flex-direction: column; gap: 0.3rem; }
+.pass-plot-head { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.75rem; color: var(--ink-2); }
+.pass-plot-time { font-family: var(--mono); color: var(--ink-3); }
+.pass-plot svg { display: block; width: 100%; height: auto; }
+.pass-plot .yt, .pass-plot .xt { font-family: var(--mono); font-size: 8px; fill: var(--ink-3); }
 .wiki { display: flex; flex-direction: column; gap: 0.4rem; }
 .thumb { width: 100%; max-height: 8rem; object-fit: cover; border-radius: 8px; }
 .extract { font-size: 0.85rem; line-height: 1.4; color: #c8d6e5; margin: 0; }

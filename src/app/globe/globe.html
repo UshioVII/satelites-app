@@ -89,7 +89,7 @@
       </section>
       <p class="hint">La línea celeste es su órbita (una vuelta completa).</p>
       @if (selectedNorad()) {
-        <app-sat-info [name]="selected()!.name" [noradId]="selectedNorad()!" />
+        <app-sat-info [name]="selected()!.name" [noradId]="selectedNorad()!" [passes]="passes()" />
       }
     </aside>
   }
