@@ -44,7 +44,7 @@
       <h3>Sobre vos ahora · {{ overhead().length }}</h3>
       <div class="gauge-row">
         @for (s of overhead().slice(0, 6); track s.name) {
-          <app-proximity-gauge [value]="s.elevation" [label]="s.name" [attr.aria-label]="'Elevación de ' + s.name + ': ' + (s.elevation | number: '1.0-0') + ' grados'" />
+          <app-proximity-gauge [value]="s.elevation" [label]="s.name" role="img" [attr.aria-label]="'Elevación de ' + s.name + ': ' + (s.elevation | number: '1.0-0') + ' grados'" />
         } @empty {
           <p class="muted">Nada sobre el horizonte ahora mismo.</p>
         }

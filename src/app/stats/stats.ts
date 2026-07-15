@@ -63,7 +63,7 @@ export class Stats implements OnDestroy {
   constructor() {
     const u = this.auth.user();
     if (u?.home_lat != null && u?.home_lng != null) this.observer.set({ lat: u.home_lat, lng: u.home_lng });
-    this.favs.reload();
+    if (this.auth.isLoggedIn()) this.favs.reload();
     this.sats.loadTLEs('visual').subscribe(({ sats }) => {
       // ponytail: brief called afterNextRender() here, but it fires outside the
       // constructor's injection context once the HTTP response arrives (NG0203).

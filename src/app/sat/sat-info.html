@@ -9,7 +9,7 @@
         <span>Perfil del próximo pase</span>
         <span class="pass-plot-time">{{ nextPass()!.start | date: 'dd/MM HH:mm' }} · pico {{ nextPass()!.maxElevation.toFixed(0) }}°</span>
       </div>
-      <svg viewBox="0 0 320 120" [attr.aria-label]="'Perfil de elevación del próximo pase, pico ' + nextPass()!.maxElevation.toFixed(0) + ' grados a las ' + (nextPass()!.start | date: 'HH:mm')">
+      <svg viewBox="0 0 320 120" role="img" [attr.aria-label]="'Perfil de elevación del próximo pase, pico ' + nextPass()!.maxElevation.toFixed(0) + ' grados a las ' + (nextPass()!.start | date: 'HH:mm')">
         <!-- bandas RAG de fondo: alta elevación (verde) / media (amarillo) / baja (rojo) -->
         <rect x="30" y="10" width="280" height="30" fill="var(--close)" opacity="0.10" />
         <rect x="30" y="40" width="280" height="30" fill="var(--near)" opacity="0.10" />
