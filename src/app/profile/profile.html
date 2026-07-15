@@ -39,7 +39,17 @@
           (change)="setColor(f, $any($event.target).value)"
           title="Color del satélite en el globo"
         />
-        <span>{{ f.sat_name }}</span>
+        <div class="fav-main">
+          <span class="fav-name">{{ f.sat_name }}</span>
+          @if (favInfo().get(f.norad_id); as p) {
+            <span class="fav-info">
+              {{ p.altKm | number: '1.0-0' }} km · {{ p.speed | number: '1.1-1' }} km/s ·
+              {{ p.periodMin | number: '1.0-0' }} min · incl {{ p.inclDeg | number: '1.0-0' }}°
+            </span>
+          } @else {
+            <span class="fav-info muted">—</span>
+          }
+        </div>
         <span class="actions">
           <button (click)="toggleArchive(f)">Archivar</button>
           <button (click)="removeFav(f)">Quitar</button>

@@ -12,6 +12,10 @@
 .favs { list-style: none; padding: 0; }
 .favs li { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid #1e2636; }
 .fav-color { width: 1.6rem; height: 1.6rem; padding: 0; border: none; border-radius: 6px; background: none; cursor: pointer; flex: none; }
+.fav-main { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.fav-name { font-weight: 600; }
+.fav-info { font-size: 0.78rem; color: #9fb3c8; font-variant-numeric: tabular-nums; }
+.fav-info.muted { color: #5b6b7f; }
 .actions { display: flex; gap: 0.4rem; margin-left: auto; }
 .actions button { background: #16233a; color: #9fb3c8; }
 .archived { opacity: 0.6; }
