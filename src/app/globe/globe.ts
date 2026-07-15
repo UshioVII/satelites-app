@@ -14,12 +14,13 @@ import { SatInfo } from '../sat/sat-info';
 import { AuthService } from '../auth/auth.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { dedupeSats } from './globe.util';
+import { ProximityGauge } from '../ui/proximity-gauge';
 
 export type VizMode = 'points' | 'heatmap';
 
 @Component({
   selector: 'app-globe',
-  imports: [DecimalPipe, DatePipe, SatInfo],
+  imports: [DecimalPipe, DatePipe, SatInfo, ProximityGauge],
   templateUrl: './globe.html',
   styleUrl: './globe.css',
 })

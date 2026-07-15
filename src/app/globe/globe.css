@@ -13,13 +13,15 @@
   position: absolute;
   top: 16px;
   left: 16px;
-  color: #fff;
+  color: var(--ink);
   font: 600 15px/1 system-ui, sans-serif;
-  background: rgba(0, 0, 0, 0.45);
+  background: var(--surface);
   padding: 10px 16px;
-  border-radius: 12px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  box-shadow: var(--glow-cyan);
 }
 .sel {
   margin-top: 8px;
@@ -27,19 +29,19 @@
   align-items: center;
   gap: 10px;
   font-weight: 400;
-  color: #00e5ff;
+  color: var(--cyan);
 }
 .sel button {
-  background: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 3px;
   padding: 4px 10px;
   cursor: pointer;
   font: inherit;
 }
 .sel button:hover {
-  background: rgba(255, 255, 255, 0.2);
+  box-shadow: var(--glow-cyan);
 }
 
 .panel {
@@ -47,14 +49,15 @@
   top: 16px;
   right: 16px;
   width: 280px;
-  color: #e8eaed;
+  color: var(--ink);
   font: 400 14px/1.4 system-ui, sans-serif;
-  background: rgba(10, 14, 20, 0.72);
-  border: 1px solid rgba(0, 229, 255, 0.25);
-  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   padding: 16px 18px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--glow-cyan);
 }
 .panel header {
   display: flex;
@@ -66,19 +69,19 @@
 .panel h2 {
   margin: 0;
   font-size: 15px;
-  color: #00e5ff;
+  color: var(--cyan);
   line-height: 1.2;
 }
 .panel header button {
   background: transparent;
-  color: #9aa1ab;
+  color: var(--ink-2);
   border: 0;
   font-size: 18px;
   cursor: pointer;
   line-height: 1;
 }
 .panel header button:hover {
-  color: #fff;
+  color: var(--ink);
 }
 .panel dl {
   margin: 0;
@@ -88,11 +91,11 @@
 .panel dl > div {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid var(--line);
   padding-bottom: 6px;
 }
 .panel dt {
-  color: #9aa1ab;
+  color: var(--ink-2);
 }
 .panel dd {
   margin: 0;
@@ -102,12 +105,12 @@
 .panel .hint {
   margin: 12px 0 0;
   font-size: 12px;
-  color: #6b727c;
+  color: var(--ink-3);
 }
 
 .passes {
   margin-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--line);
   padding-top: 12px;
 }
 .passes h3 {
@@ -115,7 +118,7 @@
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #00e5ff;
+  color: var(--cyan);
 }
 .passes ul {
   margin: 0;
@@ -134,34 +137,34 @@
 }
 .passes .detail {
   font-size: 12px;
-  color: #9aa1ab;
+  color: var(--ink-2);
 }
 .passes .muted {
-  color: #6b727c;
+  color: var(--ink-3);
   font-size: 12px;
 }
 
 .loc-btn {
   margin-top: 10px;
-  background: rgba(57, 255, 136, 0.12);
-  color: #39ff88;
-  border: 1px solid rgba(57, 255, 136, 0.35);
-  border-radius: 10px;
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--cyan);
+  border: 1px solid var(--line);
+  border-radius: 3px;
   padding: 8px 12px;
   cursor: pointer;
   font: 600 13px system-ui, sans-serif;
 }
 .loc-btn:hover {
-  background: rgba(57, 255, 136, 0.22);
+  box-shadow: var(--glow-cyan);
 }
 .err {
   margin-top: 8px;
-  color: #ff6b6b;
+  color: var(--danger);
   font-size: 12px;
 }
 .warn {
   margin-top: 6px;
-  color: #ffcf6b;
+  color: var(--warn);
   font-size: 11px;
   font-weight: 400;
   max-width: 240px;
@@ -169,7 +172,7 @@
 .warn .link {
   background: none;
   border: 0;
-  color: #00e5ff;
+  color: var(--cyan);
   cursor: pointer;
   font: inherit;
   text-decoration: underline;
@@ -181,43 +184,29 @@
   bottom: 16px;
   left: 16px;
   width: 280px;
-  color: #e8eaed;
+  color: var(--ink);
   font: 400 13px/1.4 system-ui, sans-serif;
-  background: rgba(10, 14, 20, 0.72);
-  border: 1px solid rgba(57, 255, 136, 0.25);
-  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   padding: 14px 16px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: var(--glow-cyan);
 }
 .overhead h3 {
   margin: 0 0 10px;
   font-size: 14px;
-  color: #39ff88;
+  color: var(--cyan);
 }
-.overhead ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 6px;
-}
-.overhead li {
+.gauge-row {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-}
-.overhead li span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.overhead li b {
-  color: #39ff88;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+  gap: 0.9rem;
+  flex-wrap: wrap;
 }
 .overhead .muted {
-  color: #6b727c;
+  margin: 0;
+  color: var(--ink-3);
 }
 
 /* Pantalla de carga */
@@ -242,9 +231,9 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-.viz { display: flex; gap: 0.3rem; margin-top: 0.4rem; }
+.viz { display: flex; gap: 0.3rem; margin-top: 0.4rem; padding: 3px; border-radius: 3px; background: var(--surface-solid); border: 1px solid var(--line); }
 .viz button {
-  background: #16233a; color: #9fb3c8; border: 1px solid #2a3a52;
-  border-radius: 6px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem;
+  background: transparent; color: var(--ink-2); border: none;
+  border-radius: 2px; padding: 0.25rem 0.5rem; cursor: pointer; font-size: 0.8rem;
 }
-.viz button.on { background: #00e5ff; color: #051018; border-color: #00e5ff; }
+.viz button.on { background: var(--brand); color: #04121a; box-shadow: 0 0 18px -4px rgba(0,229,255,0.7); }

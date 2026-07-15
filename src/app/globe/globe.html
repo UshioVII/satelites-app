@@ -42,16 +42,13 @@
   @if (observer()) {
     <section class="overhead">
       <h3>Sobre vos ahora · {{ overhead().length }}</h3>
-      <ul>
+      <div class="gauge-row">
         @for (s of overhead().slice(0, 6); track s.name) {
-          <li>
-            <span>{{ s.name }}</span>
-            <b>{{ s.elevation | number: '1.0-0' }}° elev</b>
-          </li>
+          <app-proximity-gauge [value]="s.elevation" [label]="s.name" />
         } @empty {
-          <li class="muted">Nada sobre el horizonte ahora mismo.</li>
+          <p class="muted">Nada sobre el horizonte ahora mismo.</p>
         }
-      </ul>
+      </div>
     </section>
   }
 
