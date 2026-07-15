@@ -20,6 +20,7 @@ export class Profile {
   readonly active = computed(() => this.favorites().filter((f) => !f.archived));
   readonly archived = computed(() => this.favorites().filter((f) => f.archived));
   readonly saved = signal(false);
+  readonly uploadError = signal('');
 
   readonly form = this.fb.nonNullable.group({
     display_name: [this.auth.user()?.display_name ?? ''],
@@ -48,7 +49,11 @@ export class Profile {
 
   onFile(event: Event) {
     const file = (event.target as HTMLInputElement).files?.[0];
-    if (file) this.auth.uploadAvatar(file).subscribe();
+    if (!file) return;
+    this.uploadError.set('');
+    this.auth.uploadAvatar(file).subscribe({
+      error: (e) => this.uploadError.set(e?.error?.error ?? 'No se pudo subir la imagen'),
+    });
   }
 
   toggleArchive(f: Favorite) {

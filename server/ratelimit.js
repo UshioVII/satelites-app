@@ -4,11 +4,17 @@
 // Cuenta SOLO intentos fallidos (status >= 400, menos el propio 429): un login o
 // registro exitoso no gasta presupuesto, así un usuario legítimo nunca se autobloquea.
 // El freno es contra fuerza bruta / enumeración, no contra uso normal.
+// En dev todo el tráfico entra por loopback (127.0.0.1 / ::1); ahí NO limitamos, porque
+// un solo test fallido bloquearía al usuario real (misma IP para todos). En prod, detrás
+// de Caddy con trust proxy, req.ip es la IP real del cliente y el límite sí aplica.
+const isLoopback = (ip) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
+
 function rateLimit({ windowMs, max, message = 'demasiados intentos fallidos, esperá unos minutos' }) {
   const fails = new Map(); // ip -> number[] (timestamps de fallos dentro de la ventana)
   return (req, res, next) => {
     const now = Date.now();
     const key = req.ip || req.socket.remoteAddress || 'unknown';
+    if (isLoopback(key)) return next();
     const arr = (fails.get(key) || []).filter((t) => now - t < windowMs);
     if (arr.length >= max) {
       fails.set(key, arr);

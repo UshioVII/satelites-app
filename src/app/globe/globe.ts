@@ -14,7 +14,7 @@ import { SatInfo } from '../sat/sat-info';
 import { AuthService } from '../auth/auth.service';
 import { dedupeSats } from './globe.util';
 
-export type VizMode = 'points' | 'heatmap' | 'hexbin';
+export type VizMode = 'points' | 'heatmap';
 
 @Component({
   selector: 'app-globe',
@@ -48,7 +48,7 @@ export class Globe implements OnDestroy {
 
   constructor() {
     const saved = this.auth.user()?.viz_mode as VizMode | undefined;
-    if (saved === 'points' || saved === 'heatmap' || saved === 'hexbin') {
+    if (saved === 'points' || saved === 'heatmap') {
       this.vizMode.set(saved);
     }
     this.loadSatellites();
@@ -66,6 +66,7 @@ export class Globe implements OnDestroy {
         this.live.set(live);
         this.loadState.set(sats.length ? 'ok' : 'error'); // ni live ni respaldo trajeron datos
         this.tick(); // pinta apenas llegan, sin esperar el proximo intervalo
+        this.applyHeatmap(); // refresca el snapshot de densidad con los datos ya cargados
       },
       error: () => this.loadState.set('error'), // fallo hasta el respaldo bundleado
     });
@@ -105,22 +106,14 @@ export class Globe implements OnDestroy {
       .heatmapPointWeight(1)
       .heatmapBandwidth(2.5)
       .heatmapBaseAltitude(0.005)
-      .heatmapsTransitionDuration(0) // sin animación: cada tick re-setea los datos y la transición parpadeaba
-      // hexbin (agregación)
-      .hexBinPointLat((d: any) => d.lat)
-      .hexBinPointLng((d: any) => d.lng)
-      .hexBinPointWeight(1)
-      .hexBinResolution(3)
-      .hexAltitude((d: any) => Math.min(0.1, d.sumWeight * 0.002))
-      .hexTopColor(() => 'rgba(0, 229, 255, 0.9)')
-      .hexSideColor(() => 'rgba(0, 229, 255, 0.35)')
-      .hexTransitionDuration(0); // ídem heatmap: sin animación por tick
+      .heatmapsTransitionDuration(0); // sin animación al re-setear datos
 
     this.globe.controls().autoRotateSpeed = 0.5;
     this.updateAutoRotate();
 
     this.timer = setInterval(() => this.tick(), 1000);
     this.tick();
+    this.applyHeatmap(); // si el modo guardado es Calor, pintarlo una vez al iniciar
   }
 
   // Rota solo si el usuario lo prendió Y no hay selección ni ubicación fijada (para leer quieto).
@@ -147,19 +140,24 @@ export class Globe implements OnDestroy {
     }
   }
 
-  // Aplica la capa activa según vizMode (guardado si el globo aún no existe: tests/jsdom).
+  // Por tick: solo la capa de puntos (satélites en movimiento y clickeables en todos los modos).
+  // El heatmap NO se re-arma acá: reconstruirlo cada segundo causaba el parpadeo del modo Calor.
   private applyViz() {
     if (!this.globe) return;
-    const pts = this.points;
-    const mode = this.vizMode();
-    this.globe.pointsData(pts); // siempre presentes: son la capa clickeable en todos los modos
-    this.globe.heatmapsData(mode === 'heatmap' ? [pts] : []);
-    this.globe.hexBinPointsData(mode === 'hexbin' ? pts : []);
+    this.globe.pointsData(this.points);
+  }
+
+  // Snapshot del heatmap de densidad. Se llama solo al cambiar de modo o al cargar datos,
+  // no por tick (la densidad casi no cambia segundo a segundo y así no parpadea).
+  private applyHeatmap() {
+    if (!this.globe) return;
+    this.globe.heatmapsData(this.vizMode() === 'heatmap' ? [this.points] : []);
   }
 
   changeViz(mode: VizMode) {
     this.vizMode.set(mode);
     this.applyViz();
+    this.applyHeatmap();
     if (this.auth.isLoggedIn()) {
       this.auth.updateProfile({ viz_mode: mode }).subscribe();
     }

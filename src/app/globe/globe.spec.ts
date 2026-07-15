@@ -45,9 +45,9 @@ describe('Globe viz persistence', () => {
 
   it('sin sesión, changeViz no pega a /api/me', () => {
     const fixture = TestBed.createComponent(Globe);
-    fixture.componentInstance.changeViz('hexbin');
+    fixture.componentInstance.changeViz('heatmap');
     http.expectNone('/api/me');
-    expect(fixture.componentInstance.vizMode()).toBe('hexbin');
+    expect(fixture.componentInstance.vizMode()).toBe('heatmap');
   });
 
   afterEach(() => {

@@ -3,7 +3,7 @@ const { hashPassword, verifyPassword, signToken, publicUser, requireAuth, PUBLIC
 const { registerErrors, isEmail } = require('./validate');
 const { rateLimit } = require('./ratelimit');
 
-const VIZ_MODES = ['points', 'heatmap', 'hexbin'];
+const VIZ_MODES = ['points', 'heatmap'];
 const PRESETS = ['earth', 'mars', 'jupiter', 'saturn', 'neptune', 'moon'];
 
 module.exports = function routesAuth(db) {

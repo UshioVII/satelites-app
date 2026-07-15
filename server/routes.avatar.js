@@ -17,7 +17,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB (los GIFs animados pesan más que un png)
   // ponytail: confiamos en el mimetype declarado + whitelist. Si el uploader fuera no confiable,
   // sumar validación de magic bytes; para avatares de usuarios logueados alcanza.
   fileFilter: (req, file, cb) => cb(null, Boolean(ALLOWED[file.mimetype])),
@@ -31,7 +31,7 @@ module.exports = function routesAvatar(db) {
 
   router.post('/', auth, (req, res) => {
     upload.single('file')(req, res, (err) => {
-      if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'imagen muy grande (máx 2 MB)' : 'archivo inválido' });
+      if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'imagen muy grande (máx 5 MB)' : 'archivo inválido' });
       if (!req.file) return res.status(400).json({ error: 'formato no soportado (png, jpg, gif o webp)' });
       // Borramos el avatar subido anterior para no acumular archivos huérfanos en /media.
       const prev = byId.get(req.user.id)?.avatar;

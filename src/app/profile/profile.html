@@ -14,8 +14,9 @@
       </div>
       <label class="upload">
         Subir imagen/gif
-        <input type="file" accept="image/*" (change)="onFile($event)" hidden />
+        <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onFile($event)" hidden />
       </label>
+      @if (uploadError()) { <p class="err">{{ uploadError() }}</p> }
     </div>
   </div>
 
