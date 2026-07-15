@@ -26,5 +26,8 @@ describe('Stats', () => {
     expect(text).toContain('ubicación');
   });
 
-  afterEach(() => http.verify());
+  afterEach(() => {
+    http.match(() => true); // drena favorites/celestrak que dispara el constructor
+    http.verify();
+  });
 });

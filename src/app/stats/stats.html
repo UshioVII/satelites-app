@@ -2,9 +2,19 @@
   <h1>Estadísticas</h1>
   @if (!observer()) {
     <p class="muted">Definí tu ubicación para ver satélites cercanos y próximos pases.</p>
-    <button (click)="locateMe()">📍 Usar mi ubicación</button>
+    <button class="btn primary" (click)="locateMe()">📍 Usar mi ubicación</button>
     @if (geoError()) { <p class="err">{{ geoError() }}</p> }
+  } @else {
+    <div class="tile glass">
+      <div class="tile-value">{{ overheadTotal() }}</div>
+      <div class="tile-label">Satélites encima</div>
+    </div>
   }
   <div class="chart"><canvas #overheadChart></canvas></div>
   <div class="chart"><canvas #passesChart></canvas></div>
+  <h2>Comparar favoritos</h2>
+  <div class="chart">
+    <canvas #compareChart></canvas>
+    @if (!compareSeries()) { <p class="muted">Guardá favoritos para comparar sus altitudes.</p> }
+  </div>
 </section>
