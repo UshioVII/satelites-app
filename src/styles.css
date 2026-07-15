@@ -1,3 +1,41 @@
+:root {
+  --bg: #060911; --bg-2: #0a0e1a;
+  --surface: rgba(16,20,34,0.62); --surface-solid: #0d1120;
+  --cyan: #00e5ff; --violet: #7c3aed; --indigo: #4f46e5;
+  --brand: linear-gradient(100deg, #00e5ff 0%, #7c3aed 55%, #4f46e5 100%);
+  --ink: #e9f2ff; --ink-2: #9fb3c8; --ink-3: #5b6b7f;
+  --ok: #39ff88; --warn: #ffcf6b; --danger: #ff5b5b;
+  --far: #ff2e2e; --near: #ffcc00; --close: #1fff87;
+  --line: rgba(0,229,255,0.22); --line-violet: rgba(124,58,237,0.28);
+  --glow-cyan: 0 0 0 1px rgba(0,229,255,0.25), 0 0 28px -6px rgba(0,229,255,0.55);
+  --glow-violet: 0 0 34px -8px rgba(124,58,237,0.6);
+  --radius: 4px; --radius-win: 2px;
+  --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Menlo, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+body { background: var(--bg); color: var(--ink); font-family: var(--sans); }
+
+.glass { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 24px 60px -30px rgba(0,0,0,0.9); }
+.text-grad { background: var(--brand); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+.btn { font: 600 0.95rem/1 var(--sans); padding: 0.7rem 1.2rem; border-radius: 3px; cursor: pointer;
+  border: none; position: relative; overflow: hidden; transition: transform .18s, box-shadow .25s; }
+.btn:active { transform: translateY(1px); }
+.btn.primary { color: #04121a; background: var(--brand); box-shadow: 0 0 0 1px rgba(0,229,255,0.4), 0 8px 30px -8px rgba(0,229,255,0.7); }
+.btn.primary:hover { box-shadow: 0 0 0 1px rgba(0,229,255,0.6), 0 10px 40px -6px rgba(124,58,237,0.85); transform: translateY(-1px); }
+.btn.primary::after { content:""; position:absolute; inset:0; background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,0.45) 50%, transparent 80%); transform: translateX(-120%); transition: transform .6s; }
+.btn.primary:hover::after { transform: translateX(120%); }
+.btn.ghost { color: var(--ink); background-image: linear-gradient(var(--surface-solid), var(--surface-solid)), var(--brand);
+  background-origin: border-box; background-clip: padding-box, border-box; border: 1px solid transparent; }
+.btn.ghost:hover { box-shadow: var(--glow-cyan); }
+
+.seg { display: inline-flex; padding: 3px; border-radius: 3px; background: var(--surface-solid); border: 1px solid var(--line); gap: 3px; }
+.seg button { font: 600 0.85rem var(--sans); padding: 0.45rem 0.9rem; border-radius: 2px; border: none; cursor: pointer; background: transparent; color: var(--ink-2); }
+.seg button.on { color: #04121a; background: var(--brand); box-shadow: 0 0 18px -4px rgba(0,229,255,0.7); }
+
+@media (prefers-reduced-motion: reduce) { .btn, .btn::after { transition: none !important; } }
+
 /* estilos globales */
 html,
 body {
