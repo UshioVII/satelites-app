@@ -12,6 +12,7 @@ import GlobeGl from 'globe.gl';
 import { SatellitesService, Sat, PosSat, OverheadSat, Pass, compass } from '../satellites.service';
 import { SatInfo } from '../sat/sat-info';
 import { AuthService } from '../auth/auth.service';
+import { dedupeSats } from './globe.util';
 
 export type VizMode = 'points' | 'heatmap' | 'hexbin';
 
@@ -59,8 +60,8 @@ export class Globe implements OnDestroy {
     this.loadState.set('loading');
     this.sats.loadTLEs('visual').subscribe({
       next: ({ sats, live }) => {
-        this.tles = sats;
-        this.count.set(sats.length);
+        this.tles = dedupeSats(sats);
+        this.count.set(this.tles.length);
         this.live.set(live);
         this.loadState.set(sats.length ? 'ok' : 'error'); // ni live ni respaldo trajeron datos
         this.tick(); // pinta apenas llegan, sin esperar el proximo intervalo
@@ -78,6 +79,7 @@ export class Globe implements OnDestroy {
       .pointAltitude(0.01)
       .pointRadius((d: any) => (this.selected()?.name === d.name ? 0.7 : 0.32))
       .pointColor((d: any) => (this.selected()?.name === d.name ? '#00e5ff' : '#ffffff'))
+      .pointsTransitionDuration(0)
       .onPointClick((d: any) => this.select(d))
       .onGlobeClick(() => this.deselect())
       // orbita (linea)
@@ -106,19 +108,30 @@ export class Globe implements OnDestroy {
       .hexTopColor(() => 'rgba(0, 229, 255, 0.9)')
       .hexSideColor(() => 'rgba(0, 229, 255, 0.35)');
 
-    this.globe.controls().autoRotate = true;
     this.globe.controls().autoRotateSpeed = 0.5;
+    this.updateAutoRotate();
 
     this.timer = setInterval(() => this.tick(), 1000);
     this.tick();
   }
 
+  // El globo rota solo cuando no hay selección ni ubicación fijada (para leer quieto).
+  private updateAutoRotate() {
+    if (!this.globe) return;
+    this.globe.controls().autoRotate = !this.selected() && !this.observer();
+  }
+
   private tick() {
     if (!this.globe || !this.tles.length) return;
     if (this.observer()) this.updateOverhead(); // el overhead sigue vivo aunque haya seleccion
-    if (this.selected()) return; // congelado si hay un satelite seleccionado
     this.points = this.sats.positionsAt(this.tles, new Date());
     this.applyViz();
+    // El seleccionado y el resto siguen moviéndose: refrescamos su posición/telemetría en vivo.
+    const sel = this.selected();
+    if (sel) {
+      const fresh = this.points.find((p) => p.name === sel.name);
+      if (fresh) this.selected.set(fresh);
+    }
   }
 
   // Aplica la capa activa según vizMode (guardado si el globo aún no existe: tests/jsdom).
@@ -141,7 +154,7 @@ export class Globe implements OnDestroy {
 
   private select(d: PosSat) {
     this.selected.set(d);
-    this.globe.controls().autoRotate = false;
+    this.updateAutoRotate();
     this.applyViz();
     const sat = this.tles.find((s) => s.name === d.name);
     this.selectedNorad.set(sat ? Number(sat.satrec.satnum) : null);
@@ -154,7 +167,7 @@ export class Globe implements OnDestroy {
     this.selected.set(null);
     this.selectedNorad.set(null);
     this.passes.set([]);
-    this.globe.controls().autoRotate = true;
+    this.updateAutoRotate();
     this.globe.pathsData([]);
     this.applyViz();
   }
@@ -176,6 +189,7 @@ export class Globe implements OnDestroy {
       (pos) => {
         const o = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         this.observer.set(o);
+        this.updateAutoRotate();
         this.geoError.set('');
         this.globe.ringsData([o]); // marca tu ubicacion
         this.globe.pointOfView({ lat: o.lat, lng: o.lng, altitude: 2.2 }, 1200); // vuela hacia vos
