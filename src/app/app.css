@@ -26,3 +26,8 @@
   cursor: pointer;
   font: inherit;
 }
+.win-loading {
+  margin: 0;
+  padding: 1.2rem;
+  color: #9fb3c8;
+}

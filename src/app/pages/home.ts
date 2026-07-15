@@ -1,6 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
+import { WindowsService } from '../ui/windows.service';
 
 @Component({
   selector: 'app-home',
@@ -20,7 +21,7 @@ import { AuthService } from '../auth/auth.service';
       <div class="cta">
         <a class="btn" routerLink="/globe">Ver el globo</a>
         @if (auth.isLoggedIn()) {
-          <a class="btn ghost" routerLink="/profile">Mi perfil</a>
+          <button class="btn ghost" (click)="win.openProfile()">Mi perfil</button>
         } @else {
           <a class="btn ghost" routerLink="/login">Entrar</a>
         }
@@ -35,11 +36,12 @@ import { AuthService } from '../auth/auth.service';
     .lead { color: #9fb3c8; font-size: 1.1rem; line-height: 1.6; }
     .feats { color: #c8d6e5; line-height: 1.8; }
     .cta { display: flex; gap: 0.8rem; margin: 1.4rem 0; }
-    .btn { padding: 0.7rem 1.2rem; border-radius: 8px; background: #00e5ff; color: #051018; text-decoration: none; font-weight: 700; }
+    .btn { padding: 0.7rem 1.2rem; border-radius: 8px; background: #00e5ff; color: #051018; text-decoration: none; font-weight: 700; cursor: pointer; font-size: 1rem; border: none; }
     .btn.ghost { background: transparent; color: #00e5ff; border: 1px solid #00e5ff; }
     .stack { color: #5b6b7f; font-size: 0.85rem; }
   `],
 })
 export class Home {
   readonly auth = inject(AuthService);
+  readonly win = inject(WindowsService);
 }
