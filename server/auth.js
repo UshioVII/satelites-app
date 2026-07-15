@@ -1,7 +1,14 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+let SECRET = process.env.JWT_SECRET;
+if (!SECRET) {
+  if (process.env.NODE_ENV === 'production') throw new Error('JWT_SECRET es obligatorio en producción');
+  // ponytail: en dev sin secreto usamos uno aleatorio efímero (los tokens no sobreviven a reinicios).
+  // Cierra el forjado de tokens con el default público. Seteá JWT_SECRET para tokens estables.
+  SECRET = require('node:crypto').randomBytes(32).toString('hex');
+  console.warn('[auth] JWT_SECRET no seteado: secreto aleatorio efímero. Seteá JWT_SECRET para persistir sesiones.');
+}
 const PUBLIC_COLS = 'id, email, display_name, home_lat, home_lng, viz_mode, avatar';
 
 function hashPassword(pw) {

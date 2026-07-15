@@ -1,6 +1,7 @@
 const express = require('express');
 const { hashPassword, verifyPassword, signToken, publicUser, requireAuth, PUBLIC_COLS } = require('./auth');
 const { registerErrors, isEmail } = require('./validate');
+const { rateLimit } = require('./ratelimit');
 
 const VIZ_MODES = ['points', 'heatmap', 'hexbin'];
 const PRESETS = ['earth', 'mars', 'jupiter', 'saturn', 'neptune', 'moon'];
@@ -13,7 +14,12 @@ module.exports = function routesAuth(db) {
   const byEmail = db.prepare('SELECT * FROM users WHERE email = ?');
   const byId = db.prepare(`SELECT ${PUBLIC_COLS} FROM users WHERE id = ?`);
 
-  router.post('/register', (req, res) => {
+  // Freno anti fuerza-bruta y anti-enumeración en las rutas sensibles.
+  const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 10 });
+  // Hash señuelo para nivelar el timing del login cuando el email no existe (evita oráculo de enumeración).
+  const DUMMY_HASH = hashPassword('timing-equalizer');
+
+  router.post('/register', authLimiter, (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const { password, display_name } = req.body || {};
     const err = registerErrors({ email, password, display_name });
@@ -24,12 +30,14 @@ module.exports = function routesAuth(db) {
     res.status(201).json({ token: signToken(user), user });
   });
 
-  router.post('/login', (req, res) => {
+  router.post('/login', authLimiter, (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const { password } = req.body || {};
     if (!isEmail(email) || typeof password !== 'string') return res.status(400).json({ error: 'datos inválidos' });
     const row = byEmail.get(email);
-    if (!row || !verifyPassword(password, row.password_hash)) return res.status(401).json({ error: 'credenciales inválidas' });
+    // Corremos siempre un bcrypt (real o señuelo) para que el tiempo no revele si el email existe.
+    const ok = row ? verifyPassword(password, row.password_hash) : (verifyPassword(password, DUMMY_HASH) && false);
+    if (!ok) return res.status(401).json({ error: 'credenciales inválidas' });
     const user = publicUser(row);
     res.json({ token: signToken(user), user });
   });
