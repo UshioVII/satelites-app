@@ -16,13 +16,13 @@
         @if (!live()) {
           <div class="warn">
             Datos de respaldo (CelesTrak no disponible): posiciones aproximadas.
-            <button class="link" (click)="loadSatellites()">Reintentar en vivo</button>
+            <button class="link" (click)="loadSatellites(true)">Reintentar en vivo</button>
           </div>
         }
       }
       @case ('error') {
         <div class="err">⚠️ No se pudieron cargar los satélites.</div>
-        <button class="loc-btn" (click)="loadSatellites()">↻ Reintentar</button>
+        <button class="loc-btn" (click)="loadSatellites(true)">↻ Reintentar</button>
       }
     }
     @if (geoError()) {

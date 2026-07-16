@@ -97,9 +97,9 @@ export class Globe implements OnDestroy {
 
   // Carga los TLEs. Antes fallaba en silencio (globo negro sin explicacion); ahora
   // expone loadState para que la UI muestre carga/error y ofrezca reintentar.
-  loadSatellites() {
+  loadSatellites(force = false) {
     this.loadState.set('loading');
-    this.sats.loadTLEs('visual').subscribe({
+    this.sats.loadTLEs('visual', force).subscribe({
       next: ({ sats, live }) => {
         this.tles = dedupeSats(sats);
         this.count.set(this.tles.length);

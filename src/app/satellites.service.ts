@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, timeout, catchError, switchMap, of } from 'rxjs';
+import { Observable, map, timeout, catchError, switchMap, of, shareReplay } from 'rxjs';
 import * as satellite from 'satellite.js';
 
 // Un satelite ya parseado: su nombre + el "satrec" (los parametros de su orbita)
@@ -53,16 +53,29 @@ export function compass(az: number): string {
 export class SatellitesService {
   private http = inject(HttpClient);
 
+  // Caché de TLEs compartida por todos los consumidores (globo, perfil, stats). Sin esto, cada
+  // componente pegaba a CelesTrak por separado en cada carga -> triple descarga y CelesTrak nos
+  // bloqueaba por "excessive downloads". TTL 10 min (los TLE se actualizan 2-3 veces al día).
+  private static readonly TLE_TTL = 10 * 60_000;
+  private tleCache = new Map<string, { at: number; obs: Observable<{ sats: Sat[]; live: boolean }> }>();
+
   // Trae los TLE de un grupo de CelesTrak. Va por /celestrak (proxy) para evitar CORS.
-  loadTLEs(group = 'visual'): Observable<{ sats: Sat[]; live: boolean }> {
+  // force=true ignora la caché (para el botón "Reintentar en vivo").
+  loadTLEs(group = 'visual', force = false): Observable<{ sats: Sat[]; live: boolean }> {
+    const cached = this.tleCache.get(group);
+    if (!force && cached && Date.now() - cached.at < SatellitesService.TLE_TTL) return cached.obs;
+
     const url = `/celestrak/NORAD/elements/gp.php?GROUP=${group}&FORMAT=tle`;
     // timeout: si CelesTrak no responde, fallar en ~12s en vez de colgar en el timeout TCP del SO (~20s)
-    return this.http.get(url, { responseType: 'text' }).pipe(
+    const obs = this.http.get(url, { responseType: 'text' }).pipe(
       timeout(12_000),
       map((t) => this.parse(t)),
       switchMap((sats) => (sats.length ? of({ sats, live: true }) : this.loadBackup())),
       catchError(() => this.loadBackup()), // CelesTrak caido/timeout -> snapshot bundleado
+      shareReplay(1), // una sola descarga compartida por todos los suscriptores
     );
+    this.tleCache.set(group, { at: Date.now(), obs });
+    return obs;
   }
 
   // Snapshot estatico bundleado (public/visual.tle) para que el globo nunca quede vacio y
