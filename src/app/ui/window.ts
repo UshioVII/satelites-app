@@ -1,4 +1,5 @@
 import { Component, input, output, signal, OnInit, ElementRef, inject, afterNextRender } from '@angular/core';
+import { SoundService } from './sound.service';
 
 // Ventana flotante estilo SO: se arrastra desde la barra de título, se minimiza, se redimensiona y se cierra.
 // El contenido va por ng-content. Posición, tamaño y foco (z-index) se manejan localmente.
@@ -40,6 +41,7 @@ export class Window implements OnInit {
   readonly close = output<void>();
 
   private host = inject(ElementRef<HTMLElement>);
+  private sound = inject(SoundService);
 
   readonly x = signal(90);
   readonly y = signal(90);
@@ -59,6 +61,7 @@ export class Window implements OnInit {
   ngOnInit() {
     this.x.set(this.initialX());
     this.y.set(this.initialY());
+    this.sound.open();
   }
 
   // Corrige la posición inicial para que la ventana quede siempre dentro del viewport
@@ -80,6 +83,7 @@ export class Window implements OnInit {
   // Con prefers-reduced-motion se salta la animación y cierra al instante.
   requestClose() {
     if (this.closing()) return; // evita doble-click disparando close() dos veces
+    this.sound.close();
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduce) {
       this.close.emit();

@@ -36,6 +36,10 @@ body { background: var(--bg); color: var(--ink); font-family: var(--sans); }
 
 @media (prefers-reduced-motion: reduce) { .btn, .btn::after { transition: none !important; } }
 
+button, a.btn, .dock-btn, .cta { transition: transform .08s; }
+button:active, a.btn:active, .dock-btn:active, .cta:active { transform: scale(0.97); }
+@media (prefers-reduced-motion: reduce) { button:active, a.btn:active, .dock-btn:active, .cta:active { transform: none; } }
+
 :focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 
 /* estilos globales */
