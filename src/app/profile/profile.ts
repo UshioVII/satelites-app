@@ -1,15 +1,17 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { AuthService } from '../auth/auth.service';
 import { FavoritesService, Favorite } from '../favorites/favorites.service';
 import { SatellitesService, Sat, PosSat } from '../satellites.service';
 import { Avatar, PRESETS } from './avatar';
 import { ToastService } from '../ui/toast.service';
+import { NotesService } from '../sat/notes.service';
+import { SatFocusService } from '../ui/sat-focus.service';
 
 @Component({
   selector: 'app-profile',
-  imports: [ReactiveFormsModule, Avatar, DecimalPipe],
+  imports: [ReactiveFormsModule, FormsModule, Avatar, DecimalPipe],
   templateUrl: './profile.html',
   styleUrl: './profile.css',
 })
@@ -18,6 +20,8 @@ export class Profile {
   private favs = inject(FavoritesService);
   private sats = inject(SatellitesService);
   private toasts = inject(ToastService);
+  private notes = inject(NotesService);
+  private satFocus = inject(SatFocusService);
   protected auth = inject(AuthService);
 
   readonly presets = PRESETS;
@@ -26,6 +30,8 @@ export class Profile {
   readonly archived = computed(() => this.favorites().filter((f) => f.archived));
   readonly saved = signal(false);
   readonly uploadError = signal('');
+  readonly editingId = signal<number | null>(null);
+  readonly noteText = signal('');
 
   // TLEs cargados una vez (mapa norad -> Sat) para calcular la telemetría de cada favorito.
   private readonly tleByNorad = signal<Map<number, Sat> | null>(null);
@@ -99,5 +105,30 @@ export class Profile {
 
   setColor(f: Favorite, color: string) {
     this.favs.setColor(f.id, color).subscribe();
+  }
+
+  find(f: Favorite) {
+    this.satFocus.focus(f.norad_id);
+    this.toasts.show('Volando a ' + f.sat_name);
+  }
+
+  editNote(f: Favorite) {
+    this.editingId.set(f.id);
+    this.noteText.set('');
+    this.notes.get(f.norad_id).subscribe((n) => this.noteText.set(n?.body ?? ''));
+  }
+
+  saveNote(f: Favorite) {
+    const body = this.noteText().trim();
+    const done = () => {
+      this.editingId.set(null);
+      this.toasts.show(body ? 'Nota guardada' : 'Nota borrada');
+    };
+    if (body) this.notes.save(f.norad_id, body).subscribe(done);
+    else this.notes.remove(f.norad_id).subscribe(done);
+  }
+
+  cancelEdit() {
+    this.editingId.set(null);
   }
 }

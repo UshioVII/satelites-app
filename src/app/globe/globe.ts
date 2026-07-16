@@ -7,6 +7,7 @@ import {
   afterNextRender,
   OnDestroy,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DecimalPipe, DatePipe } from '@angular/common';
 import GlobeGl from 'globe.gl';
 import { SatellitesService, Sat, PosSat, OverheadSat, Pass, compass } from '../satellites.service';
@@ -18,6 +19,8 @@ import { ProximityGauge } from '../ui/proximity-gauge';
 import { Window } from '../ui/window';
 import { Profile } from '../profile/profile';
 import { Stats } from '../stats/stats';
+import { ToastService } from '../ui/toast.service';
+import { SatFocusService } from '../ui/sat-focus.service';
 
 export type VizMode = 'points' | 'heatmap';
 
@@ -31,6 +34,8 @@ export class Globe implements OnDestroy {
   private sats = inject(SatellitesService);
   protected auth = inject(AuthService);
   private favs = inject(FavoritesService);
+  private toasts = inject(ToastService);
+  private satFocus = inject(SatFocusService);
   private globeEl = viewChild.required<ElementRef<HTMLDivElement>>('globe');
 
   readonly count = signal(0);
@@ -75,6 +80,19 @@ export class Globe implements OnDestroy {
     if (this.auth.isLoggedIn()) this.favs.reload(); // colores de favoritos para pintarlos en el globo
     this.loadSatellites();
     afterNextRender(() => this.initGlobe());
+    this.satFocus.focus$.pipe(takeUntilDestroyed()).subscribe((norad) => this.focusSatellite(norad));
+  }
+
+  // "Encontrar en el globo" desde el perfil: selecciona el satélite y vuela hacia él.
+  focusSatellite(norad: number) {
+    this.profileOpen.set(false); // cerrar el perfil para ver el globo
+    const p = this.points.find((x) => x.norad === norad);
+    if (!p) {
+      this.toasts.show('Ese satélite no está visible en este momento', 'error');
+      return;
+    }
+    this.select(p);
+    if (this.globe) this.globe.pointOfView({ lat: p.lat, lng: p.lng, altitude: 1.8 }, 1000);
   }
 
   // Carga los TLEs. Antes fallaba en silencio (globo negro sin explicacion); ahora

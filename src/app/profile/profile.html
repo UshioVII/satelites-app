@@ -52,9 +52,25 @@
           }
         </div>
         <span class="actions">
+          <button (click)="find(f)">Encontrar</button>
+          <button (click)="editNote(f)">Editar nota</button>
           <button (click)="toggleArchive(f)">Archivar</button>
           <button (click)="removeFav(f)">Quitar</button>
         </span>
+        @if (editingId() === f.id) {
+          <div class="note-edit">
+            <textarea
+              [ngModel]="noteText()"
+              (ngModelChange)="noteText.set($event)"
+              rows="3"
+              placeholder="Tu nota sobre este satélite…"
+            ></textarea>
+            <div class="note-edit-actions">
+              <button (click)="saveNote(f)">Guardar</button>
+              <button class="secondary" (click)="cancelEdit()">Cancelar</button>
+            </div>
+          </div>
+        }
       </li>
     } @empty {
       <li class="empty">Todavía no guardaste favoritos.</li>
