@@ -1,0 +1,122 @@
+<nav>
+  <span class="brand">🛰️ <span>Satélites</span></span>
+  <a class="cta" routerLink="/globe">Entrar al globo →</a>
+</nav>
+
+<header class="hero">
+  <div class="bg" style="background-image:url('/hero-orbit.jpg')"></div>
+  <div class="scrim"></div>
+  <div class="wrap inner">
+    <span class="eyebrow">Proyecto personal · Angular + TypeScript</span>
+    <h1>Visualizá los satélites<br /><span class="grad">en tiempo real</span></h1>
+    <p class="tag">Un globo 3D interactivo que muestra los satélites que orbitan la Tierra <b>en este momento</b>. Seleccioná uno, seguí su órbita y descubrí cuáles están pasando sobre tu ubicación.</p>
+    <div class="cta-row">
+      <a class="btn primary" routerLink="/globe">Entrar al globo →</a>
+      <button type="button" class="btn ghost" (click)="scrollToQueEs()">Conocer el proyecto ↓</button>
+    </div>
+  </div>
+  <div class="scroll-hint">scroll ↓</div>
+</header>
+
+<main>
+  <!-- QUÉ ES -->
+  <section class="block wrap reveal" id="que-es">
+    <span class="eyebrow">De qué se trata</span>
+    <h2 class="sec">Una forma clara de ver lo que hay en órbita</h2>
+    <p class="sec-lead">Cada satélite publica su posición en un formato técnico (TLE) difícil de interpretar. La aplicación toma esos datos en vivo desde CelesTrak, calcula la ubicación de cada satélite mediante propagación orbital real y los representa sobre un globo 3D. El objetivo es que cualquier persona pueda visualizar y comprender lo que hay sobre su cabeza, sin necesitar conocimientos previos.</p>
+    <div class="stat-row">
+      <div class="stat"><b class="grad">100+</b><span>satélites en vivo</span></div>
+      <div class="stat"><b class="grad">TLE</b><span>datos reales · CelesTrak</span></div>
+      <div class="stat"><b class="grad">3D</b><span>globo interactivo</span></div>
+      <div class="stat"><b class="grad">Real</b><span>propagación orbital</span></div>
+    </div>
+  </section>
+
+  <!-- PARA QUÉ SIRVE -->
+  <section class="block wrap reveal">
+    <span class="eyebrow">Para qué sirve</span>
+    <h2 class="sec">Qué podés hacer</h2>
+    <div class="cards">
+      <div class="card"><div class="ico">🛰️</div><h3>Explorar cada satélite</h3><p>Los datos técnicos se convierten en objetos interactivos: seleccionás un satélite y ves su altitud, velocidad, período e inclinación.</p></div>
+      <div class="card"><div class="ico">📍</div><h3>Ver qué tenés encima</h3><p>A partir de tu ubicación, la aplicación calcula qué satélites están sobre tu posición ahora y a qué elevación.</p></div>
+      <div class="card"><div class="ico">⏱️</div><h3>Predecir un pase</h3><p>Calcula cuándo y por dónde un satélite va a cruzar sobre tu ubicación, con su perfil de elevación.</p></div>
+      <div class="card"><div class="ico">⭐</div><h3>Hacer seguimiento</h3><p>Guardás favoritos con un color asignado, agregás notas y comparás su altitud a lo largo del tiempo.</p></div>
+    </div>
+  </section>
+
+  <!-- FUNCIONALIDADES -->
+  <section class="block wrap reveal">
+    <span class="eyebrow">Funcionalidades</span>
+    <h2 class="sec">Qué ofrece</h2>
+    <div class="cards">
+      <div class="card"><div class="ico">🌍</div><h3>Globo 3D en tiempo real</h3><p>Rotá, acercá y observá los satélites moverse en vivo sobre un mapa nocturno de la Tierra.</p></div>
+      <div class="card"><div class="ico">🔭</div><h3>Ficha de cada satélite</h3><p>Al seleccionar uno, se muestra su telemetría, su órbita trazada y un resumen de Wikipedia.</p></div>
+      <div class="card"><div class="ico">🔥</div><h3>Mapa de calor</h3><p>Una vista alternativa para identificar dónde se concentra la mayor densidad de satélites.</p></div>
+      <div class="card"><div class="ico">⭐</div><h3>Favoritos y notas</h3><p>Guardá los satélites que te interesan con un color propio y registrá tus propias anotaciones.</p></div>
+      <div class="card"><div class="ico">👤</div><h3>Cuentas de usuario</h3><p>Registro e inicio de sesión; tu ubicación y tus datos quedan asociados a tu cuenta.</p></div>
+      <div class="card"><div class="ico">📈</div><h3>Estadísticas</h3><p>Gráficos de estilo técnico: el perfil de un pase y la comparación de tus favoritos.</p></div>
+    </div>
+  </section>
+
+  <!-- EL RETO -->
+  <section class="block wrap reveal">
+    <div class="two">
+      <div>
+        <span class="eyebrow">Por qué existe</span>
+        <h2 class="sec">Nació de un reto</h2>
+        <div class="story">
+          <p class="q">“Hacé un CRUD que consuma APIs y use tokens para las cuentas.”</p>
+          <p>Ese fue el punto de partida: un amigo me propuso construir un CRUD real, que consumiera APIs y utilizara tokens para gestionar las cuentas de usuario. En lugar de resolverlo con un ejemplo genérico, decidí llevarlo al terreno de los satélites. El CRUD son los favoritos y las notas, las APIs son los datos de CelesTrak, y los tokens mantienen la sesión. La visualización 3D fue una decisión propia, por encima de lo que pedía el reto.</p>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="chip" style="border:none;background:transparent;padding:0 0 .6rem"><div class="k">El reto pedía</div></div>
+        <div class="stack-grid">
+          <div class="chip"><div class="k">Pedía</div><div class="v">Un CRUD</div></div>
+          <div class="chip"><div class="k">Pedía</div><div class="v">Consumo de APIs</div></div>
+          <div class="chip"><div class="k">Pedía</div><div class="v">Tokens · cuentas</div></div>
+          <div class="chip mine"><div class="k">Decisión propia</div><div class="v">Globo 3D + satélites</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TECNOLOGÍAS -->
+  <section class="block wrap reveal">
+    <span class="eyebrow">Cómo está construido</span>
+    <h2 class="sec">Tecnologías</h2>
+    <p class="sec-lead">Una aplicación Angular que se comunica con un backend propio y con los datos abiertos de CelesTrak. El cálculo orbital se ejecuta en el navegador; las cuentas, los favoritos y las notas se almacenan en el servidor.</p>
+    <div class="stack-grid">
+      <div class="chip"><div class="k">Frontend</div><div class="v">Angular 22 <small>standalone · signals</small></div></div>
+      <div class="chip"><div class="k">3D</div><div class="v">globe.gl <small>· three.js</small></div></div>
+      <div class="chip"><div class="k">Órbitas</div><div class="v">satellite.js <small>· SGP4</small></div></div>
+      <div class="chip"><div class="k">Gráficos</div><div class="v">chart.js</div></div>
+      <div class="chip"><div class="k">Backend</div><div class="v">Node · Express</div></div>
+      <div class="chip"><div class="k">Base de datos</div><div class="v">SQLite</div></div>
+      <div class="chip"><div class="k">Autenticación</div><div class="v">JWT <small>· bcrypt</small></div></div>
+      <div class="chip"><div class="k">Datos en vivo</div><div class="v">CelesTrak <small>TLE</small></div></div>
+    </div>
+  </section>
+
+  <!-- IA CON CONTROL HUMANO -->
+  <section class="block wrap reveal">
+    <div class="ai">
+      <div class="big">🤝</div>
+      <div>
+        <span class="eyebrow">Cómo se desarrolla</span>
+        <h2 class="sec" style="font-size:1.5rem">Desarrollo asistido por IA, con criterio humano</h2>
+        <p style="color:var(--ink-2);margin:.3rem 0 0">El proyecto se desarrolla utilizando inteligencia artificial como herramienta, lo que acelera considerablemente la implementación. Las decisiones de producto, diseño y arquitectura se toman y se revisan de forma humana en todo el proceso. La IA aporta velocidad; el criterio y las decisiones son propias.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="final wrap reveal">
+    <span class="eyebrow" style="justify-content:center">Comenzar</span>
+    <h2>Entrá al <span class="grad">globo</span></h2>
+    <p class="sec-lead" style="margin:1rem auto 2rem">La experiencia comienza en el globo. Desde ahí se abre todo lo demás —tu perfil, tus estadísticas y la información de cada satélite— en ventanas que podés mover y cerrar.</p>
+    <a class="btn primary" routerLink="/globe">Entrar al globo →</a>
+  </section>
+</main>
+
+<footer>Satélites · proyecto Angular + TypeScript · datos de CelesTrak</footer>
