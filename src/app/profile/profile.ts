@@ -5,6 +5,7 @@ import { AuthService } from '../auth/auth.service';
 import { FavoritesService, Favorite } from '../favorites/favorites.service';
 import { SatellitesService, Sat, PosSat } from '../satellites.service';
 import { Avatar, PRESETS } from './avatar';
+import { ToastService } from '../ui/toast.service';
 
 @Component({
   selector: 'app-profile',
@@ -16,6 +17,7 @@ export class Profile {
   private fb = inject(FormBuilder);
   private favs = inject(FavoritesService);
   private sats = inject(SatellitesService);
+  private toasts = inject(ToastService);
   protected auth = inject(AuthService);
 
   readonly presets = PRESETS;
@@ -62,6 +64,7 @@ export class Profile {
     this.auth.updateProfile(this.form.getRawValue()).subscribe(() => {
       this.saved.set(true);
       setTimeout(() => this.saved.set(false), 1500);
+      this.toasts.show('Perfil guardado');
     });
   }
 
@@ -74,16 +77,24 @@ export class Profile {
     if (!file) return;
     this.uploadError.set('');
     this.auth.uploadAvatar(file).subscribe({
-      error: (e) => this.uploadError.set(e?.error?.error ?? 'No se pudo subir la imagen'),
+      next: () => this.toasts.show('Avatar actualizado'),
+      error: (e) => {
+        const msg = e?.error?.error ?? 'No se pudo subir la imagen';
+        this.uploadError.set(msg);
+        this.toasts.show(msg, 'error');
+      },
     });
   }
 
   toggleArchive(f: Favorite) {
-    this.favs.setArchived(f.id, !f.archived).subscribe();
+    const wasArchived = !!f.archived;
+    this.favs.setArchived(f.id, !wasArchived).subscribe(() => {
+      this.toasts.show(wasArchived ? 'Favorito desarchivado' : 'Favorito archivado');
+    });
   }
 
   removeFav(f: Favorite) {
-    this.favs.remove(f.id).subscribe();
+    this.favs.remove(f.id).subscribe(() => this.toasts.show('Favorito quitado'));
   }
 
   setColor(f: Favorite, color: string) {

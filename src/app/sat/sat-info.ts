@@ -6,6 +6,7 @@ import { NotesService } from './notes.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { AuthService } from '../auth/auth.service';
 import { Pass } from '../satellites.service';
+import { ToastService } from '../ui/toast.service';
 
 @Component({
   selector: 'app-sat-info',
@@ -17,6 +18,7 @@ export class SatInfo {
   private wiki = inject(WikiService);
   private notesApi = inject(NotesService);
   private favs = inject(FavoritesService);
+  private toasts = inject(ToastService);
   protected auth = inject(AuthService);
 
   readonly name = input.required<string>();
@@ -30,8 +32,6 @@ export class SatInfo {
   readonly wikiState = signal<'loading' | 'ok' | 'none'>('loading');
   readonly summary = signal<WikiSummary | null>(null);
   readonly note = signal('');
-  readonly favMsg = signal('');
-  readonly noteMsg = signal('');
 
   constructor() {
     // Wikipedia: refetch cuando cambia el nombre.
@@ -48,8 +48,6 @@ export class SatInfo {
     effect(() => {
       const id = this.noradId();
       this.note.set('');
-      this.favMsg.set('');
-      this.noteMsg.set('');
       if (this.auth.isLoggedIn()) {
         this.notesApi.get(id).subscribe((nt) => this.note.set(nt?.body ?? ''));
       }
@@ -60,8 +58,8 @@ export class SatInfo {
     const body = this.note().trim();
     if (!body) return this.deleteNote(); // guardar vacío = borrar la nota
     this.notesApi.save(this.noradId(), body).subscribe({
-      next: () => this.noteMsg.set('✓ Guardada'),
-      error: () => this.noteMsg.set('No se pudo guardar'),
+      next: () => this.toasts.show('Nota guardada'),
+      error: () => this.toasts.show('No se pudo guardar la nota', 'error'),
     });
   }
 
@@ -69,16 +67,16 @@ export class SatInfo {
     this.notesApi.remove(this.noradId()).subscribe({
       next: () => {
         this.note.set('');
-        this.noteMsg.set('Nota borrada');
+        this.toasts.show('Nota borrada');
       },
-      error: () => this.noteMsg.set('No se pudo borrar'),
+      error: () => this.toasts.show('No se pudo borrar la nota', 'error'),
     });
   }
 
   addFavorite() {
     this.favs.add(this.noradId(), this.name()).subscribe({
-      next: () => this.favMsg.set('★ Guardado'),
-      error: (e) => this.favMsg.set(e?.status === 409 ? 'Ya en favoritos' : 'No se pudo guardar'),
+      next: () => this.toasts.show('★ ' + this.name() + ' agregado a favoritos — podés verlo en tu perfil'),
+      error: (e) => this.toasts.show(e?.status === 409 ? 'Ya está en favoritos' : 'No se pudo guardar el favorito', 'error'),
     });
   }
 }

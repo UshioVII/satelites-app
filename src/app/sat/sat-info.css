@@ -8,7 +8,7 @@
 .thumb { width: 100%; max-height: 8rem; object-fit: cover; border-radius: 3px; }
 .extract { font-size: 0.85rem; line-height: 1.4; color: var(--ink-2); margin: 0; }
 .muted { color: var(--ink-3); font-size: 0.85rem; }
-.wiki a, .favmsg { color: var(--cyan); font-size: 0.8rem; }
+.wiki a { color: var(--cyan); font-size: 0.8rem; }
 .fav { background: var(--surface-solid); color: var(--cyan); border: 1px solid var(--line); border-radius: 3px; padding: 0.3rem 0.6rem; cursor: pointer; }
 .fav:hover { box-shadow: var(--glow-cyan); }
 .notes { display: flex; flex-direction: column; gap: 0.3rem; }
