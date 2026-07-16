@@ -9,7 +9,7 @@ export const PRESETS = ['earth', 'mars', 'jupiter', 'saturn', 'neptune', 'moon']
     @if (isUpload()) {
       <img [src]="avatar()" alt="avatar" class="av" />
     } @else {
-      <span class="av planet planet-{{ presetId() }}"></span>
+      <span class="av planet"><img [src]="presetSrc()" [alt]="presetId()" /></span>
     }
   `,
   styleUrl: './avatar.css',
@@ -18,4 +18,9 @@ export class Avatar {
   readonly avatar = input.required<string>();
   readonly isUpload = computed(() => this.avatar().startsWith('/media'));
   readonly presetId = computed(() => this.avatar().replace('preset:', '') || 'earth');
+  // La Tierra usa un GIF rotando; los demás planetas, imágenes reales. Assets en public/planets/.
+  readonly presetSrc = computed(() => {
+    const id = this.presetId();
+    return '/planets/' + id + (id === 'earth' ? '.gif' : '.jpg');
+  });
 }
