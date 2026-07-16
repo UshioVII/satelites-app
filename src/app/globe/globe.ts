@@ -53,7 +53,7 @@ export class Globe implements OnDestroy {
   readonly compass = compass; // para el template
 
   // Posiciones iniciales de las ventanas (se leen una vez al montar cada Window).
-  get satWinX() { return Math.max(24, innerWidth - 320 - 24); } // ficha a la derecha
+  get satWinX() { return Math.max(16, innerWidth - 700 - 16); } // ficha a la derecha (ancho real ~42rem)
   get overheadX() { return Math.max(0, (innerWidth - 360) / 2); } // "sobre vos" centrada
 
   // Abre la ventana "sobre vos": pide ubicación solo la primera vez.

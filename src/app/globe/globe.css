@@ -34,6 +34,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.4rem 0.55rem;
+  max-width: 94vw;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -41,6 +42,14 @@
   -webkit-backdrop-filter: blur(12px);
   box-shadow: var(--glow-cyan);
   z-index: 6;
+}
+@media (max-width: 720px) {
+  .dock {
+    flex-wrap: wrap;
+    max-width: 94vw;
+    justify-content: center;
+    row-gap: 0.4rem;
+  }
 }
 .dock-btn {
   background: rgba(0, 229, 255, 0.1);
