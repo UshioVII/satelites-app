@@ -11,6 +11,7 @@ import { Component, input, output, signal, OnInit } from '@angular/core';
       [style.top.px]="y()"
       [style.zIndex]="z()"
       [class.min]="minimized()"
+      [class.closing]="closing()"
       (mousedown)="focus()"
     >
       <div class="bar" (mousedown)="startDrag($event)">
@@ -19,7 +20,7 @@ import { Component, input, output, signal, OnInit } from '@angular/core';
           <button type="button" (click)="minimized.set(!minimized())" [title]="minimized() ? 'Restaurar' : 'Minimizar'">
             {{ minimized() ? '▢' : '—' }}
           </button>
-          <button type="button" class="close" (click)="close.emit()" title="Cerrar">✕</button>
+          <button type="button" class="close" (click)="requestClose()" title="Cerrar">✕</button>
         </span>
       </div>
       @if (!minimized()) {
@@ -38,6 +39,7 @@ export class Window implements OnInit {
   readonly x = signal(90);
   readonly y = signal(90);
   readonly minimized = signal(false);
+  readonly closing = signal(false);
 
   // z-index compartido: al enfocar una ventana sube por encima de las demás.
   private static top = 100;
@@ -50,6 +52,18 @@ export class Window implements OnInit {
 
   focus() {
     this.z.set(++Window.top);
+  }
+
+  // Cierre animado: marca .closing (CSS reproduce el fade-out) y recién emite close al terminar.
+  // Con prefers-reduced-motion se salta la animación y cierra al instante.
+  requestClose() {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) {
+      this.close.emit();
+      return;
+    }
+    this.closing.set(true);
+    setTimeout(() => this.close.emit(), 180);
   }
 
   startDrag(e: MouseEvent) {

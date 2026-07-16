@@ -15,18 +15,21 @@ import { AuthService } from '../auth/auth.service';
 import { FavoritesService } from '../favorites/favorites.service';
 import { dedupeSats } from './globe.util';
 import { ProximityGauge } from '../ui/proximity-gauge';
+import { Window } from '../ui/window';
+import { Profile } from '../profile/profile';
+import { Stats } from '../stats/stats';
 
 export type VizMode = 'points' | 'heatmap';
 
 @Component({
   selector: 'app-globe',
-  imports: [DecimalPipe, DatePipe, SatInfo, ProximityGauge],
+  imports: [DecimalPipe, DatePipe, SatInfo, ProximityGauge, Window, Profile, Stats],
   templateUrl: './globe.html',
   styleUrl: './globe.css',
 })
 export class Globe implements OnDestroy {
   private sats = inject(SatellitesService);
-  private auth = inject(AuthService);
+  protected auth = inject(AuthService);
   private favs = inject(FavoritesService);
   private globeEl = viewChild.required<ElementRef<HTMLDivElement>>('globe');
 
@@ -42,7 +45,22 @@ export class Globe implements OnDestroy {
   readonly vizMode = signal<VizMode>('points');
   readonly autoRotateOn = signal(false); // tierra quieta por defecto; el usuario prende la rotación
 
+  // Ventanas SO abiertas desde el dock (la ficha del satélite usa selected() como estado abierto).
+  readonly overheadOpen = signal(false);
+  readonly profileOpen = signal(false);
+  readonly statsOpen = signal(false);
+
   readonly compass = compass; // para el template
+
+  // Posiciones iniciales de las ventanas (se leen una vez al montar cada Window).
+  get satWinX() { return Math.max(24, innerWidth - 320 - 24); } // ficha a la derecha
+  get overheadX() { return Math.max(0, (innerWidth - 360) / 2); } // "sobre vos" centrada
+
+  // Abre la ventana "sobre vos": pide ubicación solo la primera vez.
+  openOverhead() {
+    if (!this.observer()) this.locateMe();
+    this.overheadOpen.set(true);
+  }
 
   private tles: Sat[] = [];
   private points: PosSat[] = [];

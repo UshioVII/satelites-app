@@ -8,6 +8,7 @@
     </div>
   }
 
+  <!-- HUD: solo estado (conteo, respaldo, carga/error). Los controles viven en el dock. -->
   <div class="hud">
     @switch (loadState()) {
       @case ('ok') {
@@ -24,41 +25,31 @@
         <button class="loc-btn" (click)="loadSatellites()">↻ Reintentar</button>
       }
     }
-    @if (loadState() === 'ok') {
-      <button class="loc-btn" (click)="locateMe()">📍 ¿Qué tengo sobre mí?</button>
-    }
     @if (geoError()) {
       <div class="err">{{ geoError() }}</div>
     }
+  </div>
+
+  <!-- Dock inferior centrado: controles de visualización y ventanas. -->
+  <div class="dock">
     <div class="viz">
       <button [class.on]="vizMode() === 'points'" (click)="changeViz('points')">Puntos</button>
       <button [class.on]="vizMode() === 'heatmap'" (click)="changeViz('heatmap')">Calor</button>
     </div>
-    <button class="loc-btn" (click)="toggleRotate()">
-      {{ autoRotateOn() ? '⏸️ Detener rotación' : '🌍 Rotar globo' }}
+    <button class="dock-btn" (click)="toggleRotate()">
+      {{ autoRotateOn() ? '⏸ Detener' : '🌍 Rotar' }}
     </button>
+    <button class="dock-btn ok" (click)="openOverhead()">📍 Sobre mí</button>
+    @if (auth.isLoggedIn()) {
+      <button class="dock-btn" (click)="profileOpen.set(true)">👤 Perfil</button>
+      <button class="dock-btn" (click)="statsOpen.set(true)">📊 Stats</button>
+    }
   </div>
 
-  @if (observer()) {
-    <section class="overhead">
-      <h3>Sobre vos ahora · {{ overhead().length }}</h3>
-      <div class="gauge-row">
-        @for (s of overhead().slice(0, 6); track s.name) {
-          <app-proximity-gauge [value]="s.elevation" [label]="s.name" role="img" [attr.aria-label]="'Elevación de ' + s.name + ': ' + (s.elevation | number: '1.0-0') + ' grados'" />
-        } @empty {
-          <p class="muted">Nada sobre el horizonte ahora mismo.</p>
-        }
-      </div>
-    </section>
-  }
-
+  <!-- Ficha del satélite seleccionado -->
   @if (selected(); as sat) {
-    <aside class="panel">
-      <header>
-        <h2>{{ sat.name }}</h2>
-        <button (click)="deselect()" aria-label="cerrar">✕</button>
-      </header>
-      <dl>
+    <app-window [title]="sat.name" [initialX]="satWinX" [initialY]="60" (close)="deselect()">
+      <dl class="sat-dl">
         <div><dt>Altitud</dt><dd>{{ sat.altKm | number: '1.0-0' }} km</dd></div>
         <div><dt>Velocidad</dt><dd>{{ sat.speed | number: '1.2-2' }} km/s</dd></div>
         <div><dt>Período orbital</dt><dd>{{ sat.periodMin | number: '1.0-0' }} min</dd></div>
@@ -69,7 +60,7 @@
       <section class="passes">
         <h3>Próximos pases sobre vos</h3>
         @if (!observer()) {
-          <p class="hint">Tocá “📍 ¿Qué tengo sobre mí?” para calcular cuándo pasa sobre tu ubicación.</p>
+          <p class="hint">Tocá “📍 Sobre mí” en el dock para calcular cuándo pasa sobre tu ubicación.</p>
         } @else {
           <ul>
             @for (p of passes(); track p.start) {
@@ -91,6 +82,44 @@
       @if (selectedNorad()) {
         <app-sat-info [name]="selected()!.name" [noradId]="selectedNorad()!" [passes]="passes()" />
       }
-    </aside>
+    </app-window>
+  }
+
+  <!-- "Sobre vos ahora": gauges de los satélites sobre tu horizonte -->
+  @if (overheadOpen()) {
+    <app-window title="Sobre vos ahora" [initialX]="overheadX" [initialY]="90" (close)="overheadOpen.set(false)">
+      @if (!observer()) {
+        <p class="hint">{{ geoError() || 'Activando ubicación…' }}</p>
+      } @else {
+        <h3 class="over-h">Sobre vos ahora · {{ overhead().length }}</h3>
+        <div class="gauge-row">
+          @for (s of overhead().slice(0, 6); track s.name) {
+            <app-proximity-gauge [value]="s.elevation" [label]="s.name" role="img" [attr.aria-label]="'Elevación de ' + s.name + ': ' + (s.elevation | number: '1.0-0') + ' grados'" />
+          } @empty {
+            <p class="muted">Nada sobre el horizonte ahora mismo.</p>
+          }
+        </div>
+      }
+    </app-window>
+  }
+
+  @if (profileOpen()) {
+    <app-window title="Perfil" [initialX]="120" [initialY]="70" (close)="profileOpen.set(false)">
+      @defer (on immediate) {
+        <app-profile />
+      } @placeholder {
+        <p class="win-loading">Cargando…</p>
+      }
+    </app-window>
+  }
+
+  @if (statsOpen()) {
+    <app-window title="Estadísticas" [initialX]="200" [initialY]="110" (close)="statsOpen.set(false)">
+      @defer (on immediate) {
+        <app-stats />
+      } @placeholder {
+        <p class="win-loading">Cargando…</p>
+      }
+    </app-window>
   }
 </div>
