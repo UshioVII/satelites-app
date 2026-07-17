@@ -1,25 +1,24 @@
-# Versión Mapbox del visualizador (rama `mapbox`)
+# Versión "Mapbox" del visualizador (rama `mapbox`)
 
-Réplica del globo de satélites usando **Mapbox GL JS** (proyección de globo) en vez de globe.gl.
-Vive en la ruta `/map` (link "Mapa (beta)" en el nav). Reusa el mismo `satellites.service` — no
-duplica lógica de dominio, solo cambia la capa de render.
+Réplica del globo de satélites usando **MapLibre GL JS** (proyección de globo) en vez de globe.gl.
+MapLibre es el fork open-source de Mapbox GL: misma API, pero **gratis, sin token ni cuenta ni
+tarjeta**. Vive en la ruta `/map` (link "Mapa (beta)" en el nav). Reusa el mismo
+`satellites.service` — no duplica lógica de dominio, solo cambia la capa de render.
 
-## Para verlo andar: poné tu token de Mapbox
+> El amigo de Diego pidió "replicar el mapa en Mapbox". Mapbox exige tarjeta/banco de EEUU para
+> activar la cuenta, así que se usó MapLibre (mismo motor, estilo libre de Carto) para lograr lo
+> mismo sin costo. Si algún día se quiere el Mapbox real, es cambiar el import y poner el token.
 
-1. Creá una cuenta gratis en https://account.mapbox.com/ (el free tier no pide tarjeta).
-2. Copiá tu **Default public token** (empieza con `pk.`) desde *Access tokens*.
-3. Pegalo en `src/app/mapbox/mapbox.config.ts`:
-   ```ts
-   export const MAPBOX_TOKEN = 'pk.tu_token_aca';
-   ```
-4. `npm start` → entrá a `/map`. (Sin token, la página muestra un aviso en vez del mapa.)
+## Para verlo andar
 
-> Es un token **público** (se usa en el navegador). Conviene restringirlo por URL desde el panel
-> de Mapbox para que no lo use cualquiera.
+No hace falta configurar nada: `npm start` → entrá a `/map`. Usa el estilo libre
+`dark-matter` de Carto (`https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json`),
+que no pide key.
 
 ## Qué está implementado
 
-- Mapa Mapbox con **proyección de globo** + atmósfera (`setFog`), estilo `dark-v11`.
+- Mapa MapLibre con **proyección de globo** + atmósfera (`setProjection({ type: 'globe' })`),
+  estilo oscuro libre de Carto.
 - Los **satélites** como puntos, actualizados cada segundo (`positionsAt`).
 - **Clic en un satélite** → popup con su telemetría (altitud, velocidad, período, inclinación) y
   se dibuja su **órbita** como línea. El seleccionado se resalta.
@@ -28,14 +27,13 @@ duplica lógica de dominio, solo cambia la capa de render.
 
 ## Posibles próximos pasos
 
-- Toggle **Puntos / Calor** (Mapbox tiene capa `heatmap` nativa).
+- Toggle **Puntos / Calor** (MapLibre tiene capa `heatmap` nativa).
 - **"¿Qué tengo encima?"** con geolocalización.
 - Colorear **favoritos** (requiere backend/cuenta).
 - Comparar el rendimiento vs. globe.gl con muchos satélites.
 
 ## Archivos
 
-- `src/app/mapbox/mapbox-map.ts` — el componente del mapa.
-- `src/app/mapbox/mapbox.config.ts` — el token (vacío por defecto).
+- `src/app/mapbox/mapbox-map.ts` — el componente del mapa (usa `maplibre-gl`).
 - Ruta `/map` en `src/app/app.routes.ts`; link en `src/app/app.html`.
-- `mapbox-gl` (dep) + su CSS en `angular.json`.
+- `maplibre-gl` (dep) + su CSS (`maplibre-gl.css`) en `angular.json`.
