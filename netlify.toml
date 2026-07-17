@@ -1,0 +1,12 @@
+# Deploy del frontend (solo estático) en Netlify — gratis, sin tarjeta.
+# El backend (login/favoritos/stats) NO corre acá; el globo y la landing sí,
+# usando el snapshot de respaldo de TLEs cuando no hay proxy a CelesTrak.
+[build]
+  command = "npm install --include=dev && npm run build"
+  publish = "dist/satelites-app/browser"
+
+# Fallback SPA: cualquier ruta que no sea un archivo real -> index.html.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
