@@ -109,6 +109,10 @@ export class MapboxMap implements OnDestroy {
       m.on('mouseenter', 'sats', () => (m.getCanvas().style.cursor = 'pointer'));
       m.on('mouseleave', 'sats', () => (m.getCanvas().style.cursor = ''));
       m.on('click', 'sats', (e) => this.onSatClick(e));
+      // clic en el vacío (sin satélite debajo) -> deseleccionar
+      m.on('click', (e) => {
+        if (!m.queryRenderedFeatures(e.point, { layers: ['sats'] }).length) this.deselect();
+      });
 
       this.load();
     });
@@ -156,6 +160,14 @@ export class MapboxMap implements OnDestroy {
           `Período ${p.periodMin.toFixed(0)} min<br>Incl ${p.inclDeg.toFixed(1)}°`,
       )
       .addTo(this.map!);
+  }
+
+  private deselect() {
+    if (!this.map || this.selectedNorad === null) return;
+    this.selectedNorad = null;
+    this.map.setPaintProperty('sats', 'circle-radius', 3);
+    this.map.setPaintProperty('sats', 'circle-color', '#ffffff');
+    (this.map.getSource('orbit') as mapboxgl.GeoJSONSource | undefined)?.setData(this.lineFC([]));
   }
 
   private pointsFC(pts: PosSat[]) {
