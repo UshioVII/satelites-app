@@ -51,7 +51,7 @@ TLEs del grupo `visual` de [CelesTrak](https://celestrak.org). Si la fuente en v
 - [x] **Fase 3** — Selección interactiva, órbita y panel de telemetría
 - [x] **Fase 4** — Geolocalización, satélites sobre el observador y predicción de pases
 - [x] **Fase 5** — Resiliencia con fallback TLE
-- [ ] **Fase 6** — Autenticación JWT
+- [x] **Fase 6** — Autenticación JWT
 
 ## Licencia
 
