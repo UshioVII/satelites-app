@@ -1,0 +1,43 @@
+# Publica el frontend (Angular) en GitHub Pages en cada push a fase6-frontend.
+# Solo estático: el globo y la landing andan; login/favoritos/stats necesitan el backend.
+name: Deploy a GitHub Pages
+
+on:
+  push:
+    branches: [fase6-frontend]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --include=dev
+      - run: npx ng build --base-href=/satelites-app/
+      # Fallback SPA: Pages sirve 404.html para rutas de cliente desconocidas.
+      - run: cp dist/satelites-app/browser/index.html dist/satelites-app/browser/404.html
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/satelites-app/browser
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

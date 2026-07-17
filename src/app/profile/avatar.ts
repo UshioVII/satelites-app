@@ -21,6 +21,6 @@ export class Avatar {
   // La Tierra usa un GIF rotando; los demás planetas, imágenes reales. Assets en public/planets/.
   readonly presetSrc = computed(() => {
     const id = this.presetId();
-    return '/planets/' + id + (id === 'earth' ? '.gif' : '.jpg');
+    return 'planets/' + id + (id === 'earth' ? '.gif' : '.jpg');
   });
 }

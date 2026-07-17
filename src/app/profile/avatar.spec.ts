@@ -22,7 +22,7 @@ describe('Avatar', () => {
     const el = fixture.nativeElement as HTMLElement;
     const img = el.querySelector('.planet img');
     expect(img).toBeTruthy();
-    expect(img!.getAttribute('src')).toBe('/planets/mars.jpg');
+    expect(img!.getAttribute('src')).toBe('planets/mars.jpg');
   });
 
   it('la Tierra usa el gif', () => {
@@ -30,6 +30,6 @@ describe('Avatar', () => {
     fixture.componentRef.setInput('avatar', 'preset:earth');
     fixture.detectChanges();
     const img = (fixture.nativeElement as HTMLElement).querySelector('.planet img');
-    expect(img!.getAttribute('src')).toBe('/planets/earth.gif');
+    expect(img!.getAttribute('src')).toBe('planets/earth.gif');
   });
 });
