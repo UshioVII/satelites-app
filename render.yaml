@@ -1,0 +1,23 @@
+# Deploy en Render como un solo servicio Node: Express sirve el Angular compilado,
+# el API (/api), el proxy de CelesTrak y los avatares (/media). Una sola URL pública.
+#
+# Cómo desplegar:
+#   1. Crear una cuenta gratis en https://render.com (podés entrar con GitHub).
+#   2. New + -> Blueprint -> conectar el repo UshioVII/satelites-app.
+#      (Render detecta este render.yaml y configura todo solo.)
+#   3. Deploy. La primera build tarda unos minutos.
+#   JWT_SECRET se genera solo; los datos (SQLite) se reinician en cada redeploy
+#   (suficiente para una demo).
+services:
+  - type: web
+    name: satelites-app
+    runtime: node
+    plan: free
+    branch: fase6-frontend
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: node server/index.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
