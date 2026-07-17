@@ -49,6 +49,7 @@ export class Globe implements OnDestroy {
   readonly geoError = signal('');
   readonly vizMode = signal<VizMode>('points');
   readonly autoRotateOn = signal(false); // tierra quieta por defecto; el usuario prende la rotación
+  readonly warnDismissed = signal(false); // el usuario cerró el aviso de "datos de respaldo"
 
   // Ventanas SO abiertas desde el dock (la ficha del satélite usa selected() como estado abierto).
   readonly overheadOpen = signal(false);
@@ -71,6 +72,12 @@ export class Globe implements OnDestroy {
   private points: PosSat[] = [];
   private globe: any;
   private timer?: ReturnType<typeof setInterval>;
+  // globe.gl no re-mide su canvas al cambiar el tamaño de la ventana/monitor; lo ajustamos nosotros.
+  private resizeGlobe = () => {
+    if (!this.globe) return;
+    const el = this.globeEl().nativeElement;
+    this.globe.width(el.clientWidth).height(el.clientHeight);
+  };
 
   constructor() {
     const saved = this.auth.user()?.viz_mode as VizMode | undefined;
@@ -159,6 +166,9 @@ export class Globe implements OnDestroy {
     this.timer = setInterval(() => this.tick(), 1000);
     this.tick();
     this.applyHeatmap(); // si el modo guardado es Calor, pintarlo una vez al iniciar
+
+    addEventListener('resize', this.resizeGlobe);
+    this.resizeGlobe(); // ajusta al tamaño real actual
   }
 
   // Rota solo si el usuario lo prendió Y no hay selección ni ubicación fijada (para leer quieto).
@@ -264,5 +274,6 @@ export class Globe implements OnDestroy {
 
   ngOnDestroy() {
     clearInterval(this.timer);
+    removeEventListener('resize', this.resizeGlobe);
   }
 }

@@ -13,8 +13,9 @@
     @switch (loadState()) {
       @case ('ok') {
         <div>🛰️ {{ count() }} satélites {{ live() ? 'en vivo' : 'en órbita' }}</div>
-        @if (!live()) {
+        @if (!live() && !warnDismissed()) {
           <div class="warn">
+            <button class="warn-x" (click)="warnDismissed.set(true)" title="Ocultar" aria-label="Ocultar aviso">✕</button>
             Datos de respaldo (CelesTrak no disponible): posiciones aproximadas.
             <button class="link" (click)="loadSatellites(true)">Reintentar en vivo</button>
           </div>
