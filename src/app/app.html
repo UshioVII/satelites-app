@@ -1,6 +1,7 @@
 <nav class="nav">
   <a class="brand" routerLink="/">🛰️ Satélites-App</a>
   <a routerLink="/globe" routerLinkActive="active">Globo</a>
+  <a routerLink="/map" routerLinkActive="active">Mapa (beta)</a>
   <button class="link" (click)="sound.toggle()" [title]="sound.enabled() ? 'Silenciar' : 'Activar sonido'">{{ sound.enabled() ? '🔊' : '🔇' }}</button>
   @if (auth.isLoggedIn()) {
     <button class="link" (click)="auth.logout()">Salir</button>
