@@ -49,3 +49,7 @@ Thumbs.db
 /server/media/
 /server/.jwt-secret
 .env
+
+# scratch de herramientas / índice regenerable
+.superpowers/
+.codebase-memory/
