@@ -3,26 +3,68 @@
   align-items: center;
   gap: 1rem;
   padding: 0.6rem 1rem;
-  background: #0b0f1a;
-  border-bottom: 1px solid #1e2636;
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
   font-size: 0.95rem;
 }
 .nav a {
-  color: #9fb3c8;
+  color: var(--ink-2);
   text-decoration: none;
+  transition: color 0.2s;
 }
+.nav a:hover,
 .nav a.active {
-  color: #00e5ff;
+  color: var(--cyan);
 }
+/* Marca en fuente de consola (monospace). */
 .nav .brand {
+  font-family: var(--mono);
   font-weight: 700;
-  color: #e6f1ff;
+  letter-spacing: -0.02em;
+  color: var(--ink);
   margin-right: auto;
+}
+.nav .brand:hover {
+  color: var(--ink);
 }
 .nav .link {
   background: none;
   border: none;
-  color: #9fb3c8;
+  color: var(--ink-2);
   cursor: pointer;
   font: inherit;
+  transition: color 0.2s;
+}
+.nav .link:hover {
+  color: var(--cyan);
+}
+
+/* Loguearte: pill con borde; Registrate: botón con gradiente (CTA). */
+.nav .nav-login {
+  padding: 0.35rem 0.9rem;
+  border-radius: 4px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  transition: box-shadow 0.25s, color 0.2s;
+}
+.nav .nav-login:hover {
+  color: var(--ink);
+  box-shadow: var(--glow-cyan);
+}
+.nav .nav-register {
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-weight: 700;
+  color: #04121a;
+  background: var(--brand);
+  box-shadow: 0 4px 18px -6px rgba(0, 229, 255, 0.6);
+  transition: box-shadow 0.25s, transform 0.18s;
+}
+.nav .nav-register:hover {
+  color: #04121a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 26px -6px rgba(124, 58, 237, 0.85);
 }
