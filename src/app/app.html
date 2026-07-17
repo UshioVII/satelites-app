@@ -5,10 +5,16 @@
   <button class="link" (click)="sound.toggle()" [title]="sound.enabled() ? 'Silenciar' : 'Activar sonido'">{{ sound.enabled() ? '🔊' : '🔇' }}</button>
   @if (auth.isLoggedIn()) {
     <button class="link" (click)="auth.logout()">Salir</button>
-  } @else {
+  } @else if (!auth.backendDown()) {
     <a class="nav-login" routerLink="/login">Loguearte</a>
     <a class="nav-register" routerLink="/register">Registrate</a>
   }
 </nav>
+@if (auth.backendDown()) {
+  <div class="demo-banner">
+    🔌 Modo demo — las cuentas (login, favoritos, notas y stats) no están disponibles en esta
+    versión sin servidor. El globo, el mapa y ver satélites funcionan igual.
+  </div>
+}
 <router-outlet />
 <app-toast-host />
