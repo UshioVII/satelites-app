@@ -1,6 +1,8 @@
 # Publica el frontend (Angular) en GitHub Pages en cada push a fase6-frontend.
-# Solo estático: el globo y la landing andan; login/favoritos/stats necesitan el backend.
-name: Deploy a GitHub Pages
+# Es SOLO una demo estática: el globo y la landing andan, pero login, favoritos, notas y
+# stats NO, porque Pages no puede correr el backend Express. La app completa, con login
+# funcionando contra Turso, vive en Render: https://satelites-app.onrender.com
+name: Demo estática (GitHub Pages)
 
 on:
   push:
