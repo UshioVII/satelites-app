@@ -1,6 +1,6 @@
 const express = require('express');
 const { hashPassword, verifyPassword, signToken, publicUser, requireAuth, PUBLIC_COLS } = require('./auth');
-const { registerErrors, isEmail } = require('./validate');
+const { registerErrors, isEmail, MAX } = require('./validate');
 const { rateLimit } = require('./ratelimit');
 
 const VIZ_MODES = ['points', 'heatmap'];
@@ -49,8 +49,10 @@ module.exports = function routesAuth(db) {
     const sets = [];
     const args = [];
     if (display_name !== undefined) {
-      if (!String(display_name).trim()) return res.status(400).json({ error: 'nombre requerido' });
-      sets.push('display_name = ?'); args.push(String(display_name).trim());
+      const name = String(display_name).trim();
+      if (!name) return res.status(400).json({ error: 'nombre requerido' });
+      if (name.length > MAX.display_name) return res.status(400).json({ error: `nombre máximo ${MAX.display_name} caracteres` });
+      sets.push('display_name = ?'); args.push(name);
     }
     if (home_lat !== undefined) {
       if (home_lat !== null && !Number.isFinite(Number(home_lat))) return res.status(400).json({ error: 'coordenada inválida' });

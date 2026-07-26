@@ -1,5 +1,6 @@
 const express = require('express');
 const { requireAuth } = require('./auth');
+const { MAX } = require('./validate');
 
 // Paleta para asignar un color automático a un favorito cuando el usuario no elige uno.
 const PALETTE = [
@@ -32,6 +33,9 @@ module.exports = function routesFavorites(db) {
     const { norad_id, sat_name, color } = req.body || {};
     if (!Number.isInteger(norad_id) || !String(sat_name || '').trim()) {
       return res.status(400).json({ error: 'norad_id (entero) y sat_name requeridos' });
+    }
+    if (String(sat_name).trim().length > MAX.sat_name) {
+      return res.status(400).json({ error: `sat_name máximo ${MAX.sat_name} caracteres` });
     }
     // Color elegido por el usuario, o uno automático no repetido si no mandó ninguno válido.
     const c = isHex(color) ? color.toLowerCase() : pickColor(new Set((await usedColors.all(req.user.id)).map((r) => r.color)));

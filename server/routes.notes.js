@@ -1,5 +1,6 @@
 const express = require('express');
 const { requireAuth } = require('./auth');
+const { MAX } = require('./validate');
 
 module.exports = function routesNotes(db) {
   const router = express.Router();
@@ -34,6 +35,7 @@ module.exports = function routesNotes(db) {
     if (id === null) return;
     const body = String(req.body?.body ?? '').trim();
     if (!body) return res.status(400).json({ error: 'nota vacía' });
+    if (body.length > MAX.note_body) return res.status(400).json({ error: `nota máximo ${MAX.note_body} caracteres` });
     await upsert.run(req.user.id, id, body);
     res.json(await get.get(req.user.id, id));
   });

@@ -7,10 +7,20 @@ const routesAuth = require('./routes.auth');
 const routesFavorites = require('./routes.favorites');
 const routesNotes = require('./routes.notes');
 const routesAvatar = require('./routes.avatar');
+const { securityHeaders } = require('./security');
+const { rateLimit } = require('./ratelimit');
+
+// El único endpoint de CelesTrak que la app consume (satellites.service.ts). El proxy no
+// reenvía nada más: si no, cualquiera podría usar este servidor como relay abierto hacia
+// celestrak.org y quemarnos el ancho de banda del plan free.
+const CELESTRAK_PATH = '/NORAD/elements/gp.php';
+const GROUP_RE = /^[a-z0-9-]{1,32}$/;
 
 function createApp(db) {
   const app = express();
+  app.disable('x-powered-by');
   app.set('trust proxy', 1); // detrás de Caddy/proxy: req.ip usa X-Forwarded-For (para el rate limit)
+  app.use(securityHeaders());
   // CORS restringido al frontend (coma-separado en CORS_ORIGIN para varios). En dev el proxy de Angular
   // es same-origin, así que esto solo cierra el API a orígenes ajenos.
   app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : 'http://localhost:4200' }));
@@ -21,9 +31,20 @@ function createApp(db) {
   app.use('/api/avatar', routesAvatar(db)); // sube y sirve el avatar; ya no hay /media en disco
 
   // Proxy de CelesTrak server-side (en prod no hay proxy de Angular; evita CORS del navegador).
-  app.use('/celestrak', async (req, res) => {
+  // Cuenta TODAS las requests, no solo las fallidas: acá el abuso es el volumen, no el error.
+  // El frontend cachea los TLE 10 min, así que un usuario normal ni se acerca al techo.
+  const celestrakLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 60, countAll: true, message: 'demasiadas consultas, esperá unos minutos' });
+  app.use('/celestrak', celestrakLimiter, async (req, res) => {
+    // La URL de salida se REARMA con los valores ya validados; nunca se reenvía req.url tal cual.
+    const asked = new URL(req.url, 'https://celestrak.org');
+    const group = asked.searchParams.get('GROUP') ?? '';
+    const format = asked.searchParams.get('FORMAT') ?? 'tle';
+    if (req.method !== 'GET' || asked.pathname !== CELESTRAK_PATH || !GROUP_RE.test(group) || format !== 'tle') {
+      return res.status(400).type('text/plain').send('');
+    }
     try {
-      const r = await fetch('https://celestrak.org' + req.url, { signal: AbortSignal.timeout(12_000) });
+      const upstream = `https://celestrak.org${CELESTRAK_PATH}?GROUP=${group}&FORMAT=tle`;
+      const r = await fetch(upstream, { signal: AbortSignal.timeout(12_000) });
       res.status(r.status).type('text/plain').send(await r.text());
     } catch {
       res.status(502).send(''); // el frontend cae a su snapshot de respaldo

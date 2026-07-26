@@ -9,8 +9,10 @@
 // de Caddy con trust proxy, req.ip es la IP real del cliente y el límite sí aplica.
 const isLoopback = (ip) => ip === '127.0.0.1' || ip === '::1' || ip === '::ffff:127.0.0.1';
 
-function rateLimit({ windowMs, max, message = 'demasiados intentos fallidos, esperá unos minutos' }) {
-  const fails = new Map(); // ip -> number[] (timestamps de fallos dentro de la ventana)
+// countAll=true cuenta también las requests exitosas. Se usa en el proxy de CelesTrak, donde
+// lo que hay que frenar es el volumen (ancho de banda), no los intentos fallidos.
+function rateLimit({ windowMs, max, countAll = false, message = 'demasiados intentos fallidos, esperá unos minutos' }) {
+  const fails = new Map(); // ip -> number[] (timestamps de requests contadas dentro de la ventana)
   return (req, res, next) => {
     const now = Date.now();
     const key = req.ip || req.socket.remoteAddress || 'unknown';
@@ -24,7 +26,7 @@ function rateLimit({ windowMs, max, message = 'demasiados intentos fallidos, esp
     else fails.delete(key); // sin fallos vigentes: no ocupamos memoria
     if (fails.size > 5000) for (const [k, v] of fails) if (!v.some((t) => now - t < windowMs)) fails.delete(k);
     res.on('finish', () => {
-      if (res.statusCode >= 400 && res.statusCode !== 429) {
+      if ((countAll || res.statusCode >= 400) && res.statusCode !== 429) {
         const cur = fails.get(key) || [];
         cur.push(Date.now());
         fails.set(key, cur);
