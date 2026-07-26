@@ -13,8 +13,8 @@ services:
     name: satelites-app
     runtime: node
     plan: free
-    # mapbox contiene todo lo de fase6-frontend + el visualizador MapLibre (5 commits).
-    branch: mapbox
+    # Rama de la app. mapbox NO va acá: es una rama de aprendizaje de MapLibre.
+    branch: fase6-frontend
     buildCommand: npm install --include=dev && npm run build
     startCommand: node server/index.js
     envVars:
