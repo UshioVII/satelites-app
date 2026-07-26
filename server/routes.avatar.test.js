@@ -4,7 +4,7 @@ const { openDb } = require('./db');
 const { createApp } = require('./index');
 
 async function bootWithUser() {
-  const app = createApp(openDb(':memory:'));
+  const app = createApp(await openDb(':memory:'));
   const server = await new Promise((res) => { const s = app.listen(0, () => res(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
   const reg = await (await fetch(`${base}/api/register`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: 'a@b.com', password: '12345678', display_name: 'Ana' }) })).json();

@@ -41,12 +41,14 @@ function publicUser(row) {
 }
 function requireAuth(db) {
   const getUser = db.prepare(`SELECT ${PUBLIC_COLS} FROM users WHERE id = ?`);
-  return (req, res, next) => {
+  // async: la consulta a la base ahora devuelve promesa. Express 5 propaga solo el rechazo
+  // de un middleware async al manejador de errores, así que no hace falta try/catch acá.
+  return async (req, res, next) => {
     const header = req.headers.authorization || '';
     const token = header.startsWith('Bearer ') ? header.slice(7) : null;
     const payload = token && verifyToken(token);
     if (!payload) return res.status(401).json({ error: 'no autorizado' });
-    const user = getUser.get(payload.uid);
+    const user = await getUser.get(payload.uid);
     if (!user) return res.status(401).json({ error: 'no autorizado' });
     req.user = user;
     next();

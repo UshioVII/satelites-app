@@ -5,7 +5,7 @@ const { createApp } = require('./index');
 
 // Levanta el app en un puerto efímero y devuelve base URL + close.
 async function boot() {
-  const app = createApp(openDb(':memory:'));
+  const app = createApp(await openDb(':memory:'));
   const server = await new Promise((res) => {
     const s = app.listen(0, () => res(s));
   });

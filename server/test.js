@@ -4,7 +4,8 @@ const { openDb } = require('./db');
 const { createApp } = require('./index');
 
 (async () => {
-  const server = await new Promise((res) => { const s = createApp(openDb(':memory:')).listen(0, () => res(s)); });
+  const db = await openDb(':memory:');
+  const server = await new Promise((res) => { const s = createApp(db).listen(0, () => res(s)); });
   const base = `http://127.0.0.1:${server.address().port}`;
   const H = (t) => ({ 'content-type': 'application/json', authorization: `Bearer ${t}` });
 

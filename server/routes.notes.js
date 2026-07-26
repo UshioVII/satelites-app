@@ -21,27 +21,27 @@ module.exports = function routesNotes(db) {
     return id;
   }
 
-  router.get('/:norad_id', (req, res) => {
+  router.get('/:norad_id', async (req, res) => {
     const id = parseNoradId(req, res);
     if (id === null) return;
-    const note = get.get(req.user.id, id);
+    const note = await get.get(req.user.id, id);
     if (!note) return res.status(404).json({ error: 'sin nota' });
     res.json(note);
   });
 
-  router.put('/:norad_id', (req, res) => {
+  router.put('/:norad_id', async (req, res) => {
     const id = parseNoradId(req, res);
     if (id === null) return;
     const body = String(req.body?.body ?? '').trim();
     if (!body) return res.status(400).json({ error: 'nota vacía' });
-    upsert.run(req.user.id, id, body);
-    res.json(get.get(req.user.id, id));
+    await upsert.run(req.user.id, id, body);
+    res.json(await get.get(req.user.id, id));
   });
 
-  router.delete('/:norad_id', (req, res) => {
+  router.delete('/:norad_id', async (req, res) => {
     const id = parseNoradId(req, res);
     if (id === null) return;
-    del.run(req.user.id, id);
+    await del.run(req.user.id, id);
     res.status(204).end();
   });
 
