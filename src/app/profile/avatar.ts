@@ -16,7 +16,9 @@ export const PRESETS = ['earth', 'mars', 'jupiter', 'saturn', 'neptune', 'moon']
 })
 export class Avatar {
   readonly avatar = input.required<string>();
-  readonly isUpload = computed(() => this.avatar().startsWith('/media'));
+  // Todo lo que no es un preset es una imagen subida (hoy /api/avatar/<uuid>). Se mira por
+  // lo que NO es, así un cambio de ruta en el backend no vuelve a romper esto.
+  readonly isUpload = computed(() => !this.avatar().startsWith('preset:'));
   readonly presetId = computed(() => this.avatar().replace('preset:', '') || 'earth');
   // La Tierra usa un GIF rotando; los demás planetas, imágenes reales. Assets en public/planets/.
   readonly presetSrc = computed(() => {

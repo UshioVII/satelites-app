@@ -97,10 +97,23 @@ async function migrate(db) {
       updated_at TEXT NOT NULL DEFAULT (datetime('now')),
       PRIMARY KEY (user_id, norad_id)
     );
+    -- Los avatares subidos viven acá y no en el disco del contenedor, que en Render es
+    -- efímero: cada redeploy o spin-down borraba la imagen y dejaba la foto rota.
+    -- El id es un UUID, no el user_id, para que la URL no sea adivinable enumerando usuarios.
+    CREATE TABLE IF NOT EXISTS avatars (
+      id         TEXT PRIMARY KEY,
+      user_id    INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+      mime       TEXT NOT NULL,
+      bytes      BLOB NOT NULL,
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
   // Migración para DBs viejas: agregar favorites.color si no existe.
   const favCols = (await db.prepare('PRAGMA table_info(favorites)').all()).map((c) => c.name);
   if (!favCols.includes('color')) await db.exec('ALTER TABLE favorites ADD COLUMN color TEXT');
+  // Avatares del esquema viejo (/media/<uuid>.png): esos archivos ya no existen y apuntaban
+  // al disco efímero. Se vuelven al preset por defecto en vez de dejar una imagen rota.
+  await db.prepare("UPDATE users SET avatar = 'preset:earth' WHERE avatar LIKE '/media/%'").run();
 }
 
 module.exports = { openDb };

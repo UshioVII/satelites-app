@@ -18,10 +18,7 @@ function createApp(db) {
   app.use('/api', routesAuth(db));
   app.use('/api/favorites', routesFavorites(db));
   app.use('/api/notes', routesNotes(db));
-  app.use('/api/avatar', routesAvatar(db));
-  app.use('/media', express.static(path.join(__dirname, 'media'), {
-    setHeaders: (res) => res.setHeader('X-Content-Type-Options', 'nosniff'), // no dejar que el browser adivine el tipo
-  }));
+  app.use('/api/avatar', routesAvatar(db)); // sube y sirve el avatar; ya no hay /media en disco
 
   // Proxy de CelesTrak server-side (en prod no hay proxy de Angular; evita CORS del navegador).
   app.use('/celestrak', async (req, res) => {
@@ -39,7 +36,7 @@ function createApp(db) {
     app.use(express.static(browserDir));
     app.use((req, res, next) => {
       if (req.method !== 'GET') return next();
-      if (req.path.startsWith('/api') || req.path.startsWith('/media') || req.path.startsWith('/celestrak')) return next();
+      if (req.path.startsWith('/api') || req.path.startsWith('/celestrak')) return next();
       res.sendFile(path.join(browserDir, 'index.html'));
     });
   }
