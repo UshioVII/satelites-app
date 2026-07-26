@@ -52,9 +52,16 @@ function createApp(db) {
 }
 
 if (require.main === module) {
-  const db = openDb();
+  // .env local (Turso). Nativo de Node, sin dependencia: en prod las variables vienen del host.
+  try {
+    process.loadEnvFile(path.join(__dirname, '..', '.env'));
+  } catch {
+    /* sin .env: se usan las variables del entorno */
+  }
   const port = process.env.PORT || 3000;
-  createApp(db).listen(port, () => console.log(`API en http://localhost:${port}`));
+  openDb().then((db) => {
+    createApp(db).listen(port, () => console.log(`API en http://localhost:${port}`));
+  });
 }
 
 module.exports = { createApp };

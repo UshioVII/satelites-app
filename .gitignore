@@ -53,3 +53,6 @@ Thumbs.db
 # scratch de herramientas / índice regenerable
 .superpowers/
 .codebase-memory/
+
+# salida generada por graphify
+graphify-out/

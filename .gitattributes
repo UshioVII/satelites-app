@@ -1,0 +1,3 @@
+# Normaliza finales de linea: el repo guarda LF, cada SO checkoutea lo suyo.
+# Sin esto, abrir el repo desde Windows marca los ~20 archivos como modificados.
+* text=auto eol=lf

@@ -26,25 +26,25 @@ module.exports = function routesFavorites(db) {
   const usedColors = db.prepare('SELECT color FROM favorites WHERE user_id = ? AND color IS NOT NULL');
   const del = db.prepare('DELETE FROM favorites WHERE id = ? AND user_id = ?');
 
-  router.get('/', (req, res) => res.json(list.all(req.user.id)));
+  router.get('/', async (req, res) => res.json(await list.all(req.user.id)));
 
-  router.post('/', (req, res) => {
+  router.post('/', async (req, res) => {
     const { norad_id, sat_name, color } = req.body || {};
     if (!Number.isInteger(norad_id) || !String(sat_name || '').trim()) {
       return res.status(400).json({ error: 'norad_id (entero) y sat_name requeridos' });
     }
     // Color elegido por el usuario, o uno automático no repetido si no mandó ninguno válido.
-    const c = isHex(color) ? color.toLowerCase() : pickColor(new Set(usedColors.all(req.user.id).map((r) => r.color)));
+    const c = isHex(color) ? color.toLowerCase() : pickColor(new Set((await usedColors.all(req.user.id)).map((r) => r.color)));
     try {
-      const info = insert.run(req.user.id, norad_id, String(sat_name).trim(), c);
-      res.status(201).json(byId.get(info.lastInsertRowid, req.user.id));
+      const info = await insert.run(req.user.id, norad_id, String(sat_name).trim(), c);
+      res.status(201).json(await byId.get(info.lastInsertRowid, req.user.id));
     } catch (e) {
       if (String(e.message).includes('UNIQUE')) return res.status(409).json({ error: 'ya está en favoritos' });
       throw e;
     }
   });
 
-  router.patch('/:id', (req, res) => {
+  router.patch('/:id', async (req, res) => {
     const sets = [];
     const args = [];
     if (req.body?.archived !== undefined) {
@@ -58,13 +58,13 @@ module.exports = function routesFavorites(db) {
     }
     if (!sets.length) return res.status(400).json({ error: 'nada para actualizar' });
     args.push(req.params.id, req.user.id);
-    const info = db.prepare(`UPDATE favorites SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(...args);
+    const info = await db.prepare(`UPDATE favorites SET ${sets.join(', ')} WHERE id = ? AND user_id = ?`).run(...args);
     if (!info.changes) return res.status(404).json({ error: 'no encontrado' });
-    res.json(byId.get(req.params.id, req.user.id));
+    res.json(await byId.get(req.params.id, req.user.id));
   });
 
-  router.delete('/:id', (req, res) => {
-    const info = del.run(req.params.id, req.user.id);
+  router.delete('/:id', async (req, res) => {
+    const info = await del.run(req.params.id, req.user.id);
     if (!info.changes) return res.status(404).json({ error: 'no encontrado' });
     res.status(204).end();
   });

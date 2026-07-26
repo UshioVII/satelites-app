@@ -19,22 +19,22 @@ module.exports = function routesAuth(db) {
   // Hash señuelo para nivelar el timing del login cuando el email no existe (evita oráculo de enumeración).
   const DUMMY_HASH = hashPassword('timing-equalizer');
 
-  router.post('/register', authLimiter, (req, res) => {
+  router.post('/register', authLimiter, async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const { password, display_name } = req.body || {};
     const err = registerErrors({ email, password, display_name });
     if (err) return res.status(400).json({ error: err });
-    if (byEmail.get(email)) return res.status(409).json({ error: 'email ya registrado' });
-    const info = insertUser.run(email, hashPassword(password), display_name.trim());
-    const user = byId.get(info.lastInsertRowid);
+    if (await byEmail.get(email)) return res.status(409).json({ error: 'email ya registrado' });
+    const info = await insertUser.run(email, hashPassword(password), display_name.trim());
+    const user = await byId.get(info.lastInsertRowid);
     res.status(201).json({ token: signToken(user), user });
   });
 
-  router.post('/login', authLimiter, (req, res) => {
+  router.post('/login', authLimiter, async (req, res) => {
     const email = String(req.body?.email || '').trim().toLowerCase();
     const { password } = req.body || {};
     if (!isEmail(email) || typeof password !== 'string') return res.status(400).json({ error: 'datos inválidos' });
-    const row = byEmail.get(email);
+    const row = await byEmail.get(email);
     // Corremos siempre un bcrypt (real o señuelo) para que el tiempo no revele si el email existe.
     const ok = row ? verifyPassword(password, row.password_hash) : (verifyPassword(password, DUMMY_HASH) && false);
     if (!ok) return res.status(401).json({ error: 'credenciales inválidas' });
@@ -44,7 +44,7 @@ module.exports = function routesAuth(db) {
 
   router.get('/me', auth, (req, res) => res.json(req.user));
 
-  router.patch('/me', auth, (req, res) => {
+  router.patch('/me', auth, async (req, res) => {
     const { display_name, home_lat, home_lng, viz_mode, avatar } = req.body || {};
     const sets = [];
     const args = [];
@@ -71,8 +71,8 @@ module.exports = function routesAuth(db) {
     }
     if (!sets.length) return res.status(400).json({ error: 'nada para actualizar' });
     args.push(req.user.id);
-    db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...args);
-    res.json(byId.get(req.user.id));
+    await db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).run(...args);
+    res.json(await byId.get(req.user.id));
   });
 
   return router;

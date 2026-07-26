@@ -29,18 +29,23 @@ module.exports = function routesAvatar(db) {
   const setAvatar = db.prepare('UPDATE users SET avatar = ? WHERE id = ?');
   const byId = db.prepare(`SELECT ${PUBLIC_COLS} FROM users WHERE id = ?`);
 
-  router.post('/', auth, (req, res) => {
+  router.post('/', auth, (req, res, next) => {
+    // El trabajo pasa dentro del callback de multer, no en el handler: Express no ve esta
+    // promesa, así que el rechazo se encadena a mano con next(e). Sin eso, un error de la
+    // base dejaría la request colgada hasta el timeout del cliente en vez de dar un 500.
     upload.single('file')(req, res, (err) => {
       if (err) return res.status(400).json({ error: err.code === 'LIMIT_FILE_SIZE' ? 'imagen muy grande (máx 5 MB)' : 'archivo inválido' });
       if (!req.file) return res.status(400).json({ error: 'formato no soportado (png, jpg, gif o webp)' });
-      // Borramos el avatar subido anterior para no acumular archivos huérfanos en /media.
-      const prev = byId.get(req.user.id)?.avatar;
-      if (prev && prev.startsWith('/media/')) {
-        fs.unlink(path.join(MEDIA_DIR, path.basename(prev)), () => {}); // best-effort, ignora si no existe
-      }
-      const url = `/media/${req.file.filename}`;
-      setAvatar.run(url, req.user.id);
-      res.json({ avatar: url, user: byId.get(req.user.id) });
+      (async () => {
+        // Borramos el avatar subido anterior para no acumular archivos huérfanos en /media.
+        const prev = (await byId.get(req.user.id))?.avatar;
+        if (prev && prev.startsWith('/media/')) {
+          fs.unlink(path.join(MEDIA_DIR, path.basename(prev)), () => {}); // best-effort, ignora si no existe
+        }
+        const url = `/media/${req.file.filename}`;
+        await setAvatar.run(url, req.user.id);
+        res.json({ avatar: url, user: await byId.get(req.user.id) });
+      })().catch(next);
     });
   });
 

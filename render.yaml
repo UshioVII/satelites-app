@@ -1,23 +1,33 @@
 # Deploy en Render como un solo servicio Node: Express sirve el Angular compilado,
 # el API (/api), el proxy de CelesTrak y los avatares (/media). Una sola URL pública.
+# Al ser same-origin, las rutas relativas /api del frontend andan sin CORS ni URL absoluta.
 #
 # Cómo desplegar:
 #   1. Crear una cuenta gratis en https://render.com (podés entrar con GitHub).
 #   2. New + -> Blueprint -> conectar el repo UshioVII/satelites-app.
 #      (Render detecta este render.yaml y configura todo solo.)
-#   3. Deploy. La primera build tarda unos minutos.
-#   JWT_SECRET se genera solo; los datos (SQLite) se reinician en cada redeploy
-#   (suficiente para una demo).
+#   3. Pegar los dos secretos de Turso que pide (están en el .env local, fuera del repo).
+#   4. Deploy. La primera build tarda unos minutos.
 services:
   - type: web
     name: satelites-app
     runtime: node
     plan: free
-    branch: fase6-frontend
+    # mapbox contiene todo lo de fase6-frontend + el visualizador MapLibre (5 commits).
+    branch: mapbox
     buildCommand: npm install --include=dev && npm run build
     startCommand: node server/index.js
     envVars:
       - key: NODE_ENV
         value: production
+      # Render lo genera una vez al crear el servicio y lo conserva entre deploys.
+      # Es obligatorio en producción: server/auth.js:6 corta el arranque si falta.
       - key: JWT_SECRET
         generateValue: true
+      # Los usuarios viven en Turso, no en el disco del contenedor. Sin esto el login
+      # "andaría" pero se borraría en cada redeploy o spin-down por inactividad,
+      # porque el filesystem del plan free es efímero.
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
